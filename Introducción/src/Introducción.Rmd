@@ -1,0 +1,96 @@
+---
+title: "Introducción a los ejemplos de los datos del proyecto conjuntop JEP-CEV-HRDAG"
+output:
+  rmdformats::robobook:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+    gallery: true
+    use_bookdown: true
+    highlight: kate
+    embed_fonts: false
+knit: (function(inputFile, encoding) {rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output") })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introducción {-}
+
+Los ejemplos en este repositorio ilustran el proceso de cálculo de las víctimas 
+documentadas, imputadas y estimación del subregistro de alguna de las violaciones 
+a derechos humanos en el marco del conflicto armado colombiano abordadas por el 
+proyecto JEP-CEV-HRDAG. Para esto, se usa el paquete `verdata`, una herramienta 
+pensada para facilitar el trabajo y los análisis con estos datos. `verdata` 
+cuenta con 8 funciones: `confirm_files`, `read_replicates`, `filter_standard_cev`, 
+`summary_observed`, `combine_replicates`, `mse` y `combine_estimates`. Estos 
+ejemplos muestran el uso adecuado de cada una de estas funciones y el orden en 
+el que debe hacerse según su necesidad. 
+
+## ¿Qué debemos tener en cuenta antes de usar el paquete? {-}
+
+Antes de empezar a trabjar con los datos, es importante definir algunos conceptos 
+para que usted, como usuario del paquete, pueda no solo replicar los cálculos del  
+[anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)así como el resto de cifras presentadas en el [Informe Final de la Comisión de la Verdad](https://www.comisiondelaverdad.co/hay-futuro-si-hay-verdad), 
+sino también pueda explorar los datos e implementar nuevos análisis relacionados 
+con el conflicto armado en Colombia.
+
+Para eso, es importante recordar que este proyecto se dividó en tres fases 
+importantes: la integración de fuentes de datos, la imputación de campos faltates 
+y la estimación del subregistro (vea todos los detalles en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/hay-futuro-si-hay-verdad)). 
+A continuación se hace un breve resúmen de los conceptos necesarios para el uso 
+del paquete:
+
+**A. Datos observados**
+
+Son aquellos datos de la víctima que ya estaban presentes en la base integrada, 
+es decir, la base que fue consolidada a partir de la información de más de 100 
+bases de datos de diversas instituciones en Colombia. Sin embargo, si bien 
+algunas víctimas cuentan con la información completa en variables como sexo, 
+edad, etc., otras víctimas presentan campos faltantes en dichas variables, 
+por ende, no tenemos certeza de cuáles fueron las características de las 
+víctimas, es decir, tenemos y siempre tendremos incertidumbre sobre el valor o 
+características reales de dichas personas.
+
+**B. Campos imputados**
+
+Para abordar el vacío en la información documentada se implementó un 
+modelo estadístico de imputación múltiple que permite tener una base de datos 
+donde ahora se observan valores *posibles* respecto a la edad de la víctima,
+presunto responsable, etnia, etc. A estas observaciones la denominamos campos 
+o datos imputados (estadísticamente hablando. No confundir con imputación en 
+términos jurídicos). El proceso de imputación estadística se realizó 
+100 veces para cada violación a derechos humanos, por lo que para cada una, se 
+encuentran 100 bases de datos que denoninamos réplicas. Cada réplica puede 
+pensarse como una "versión de los datos diferente". Por ejemplo, si la víctima 1 
+no contaba con información sobre su etnia, el proceso de imputación pudo haberle 
+asignado en la réplica 1 el valor de indígena, en la réplica 2 el valor de 
+mestizo, en la réplica 3 el valor de indígena nuevamente, etc. Suponga que el 
+proceso de imputación asignó 54 veces el valor de ingígena a la etnia de esta 
+víctima, 30 veces el valor de mestizo, y 16 veces el valor de NARP. No tenemos 
+certeza de la etnia real de esta víctima, pero podemos observar el valor más 
+probable de acuerdo al resultado de la imputación. En este ejemplo, el valor más 
+probable es indígena. (ver más en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/hay-futuro-si-hay-verdad)).
+
+
+**C. Estimación del subregistro**
+
+Si bien a través de la base integrada contamos con una cantidad considerable de 
+víctimas registradas, es importante entender que ninguna de estas bases de datos 
+registra por completo el conflicto armado, ni siquiera su integración lo hace. 
+Esto quiere decir que aún faltan víctimas por documentar: aquellas que nunca 
+fueron registradas en ninguna de datos. Para abordar el subregistro o los datos 
+faltantes se utiliza una metodología que en estadística se llama 
+*Estimación por Sistemas Múltiples (ESM)* (ver más en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/hay-futuro-si-hay-verdad)).
+
+## Conclusión {-}
+
+Las funciones de este paquete son útiles para observar cada parte del proyecto 
+según el análisis que usted quiera hacer: el número de víctimas observadas y 
+su proporción de datos faltantes antes de la imputación, el resultado de la 
+imputación estadística y el resultado de la estimación del subregistro. Además, 
+esta forma de los datos de su uso permite la transparencia con respecto a la 
+incertidumbre que viene con no saber el valor real de los campos faltantes y no saber el número preciso de víctimas no documentadas. 
+
