@@ -1,0 +1,636 @@
+---
+title: "Hallazgos estadísticos. Víctimas documentadas, imputadas y estimación del subregistro"
+subtitle: "Reclutamiento de niños, niñas y adolescentes (1990–2017)"
+output:
+  rmdformats::robobook:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+    gallery: true
+    use_bookdown: true
+    highlight: kate
+    embed_fonts: false
+---
+
+```{r setup, echo = TRUE,include = FALSE}
+
+pacman::p_load(ggplot2, dplyr, rmarkdown, LCMCR, here, arrow, dplyr, rlang, 
+               purrr, glue, tidyr, stringr, gridExtra)
+
+options(warn = -1)
+
+```
+
+```{r numbers, include = FALSE}
+
+myNum <- function(n) {
+  return(prettyNum(n, big.mark = " "))
+}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+```
+
+```{r library, include=TRUE}
+
+library(verdata)
+
+```
+
+## Introducción {-}
+
+El presente documento evidencia el proceso de obtención de las víctimas 
+documentadas, imputadas y estimación del subregistro (desagregadas por sexo) 
+usando las funciones `confirm_files`, `read_replicates`, `filter_standard_cev`, 
+`summary_observed`, `combine_replicates`, `mse` y `combine_estimates` del paquete
+`verdata`. Específicamente se replicará la tabla 9 del informe metodológico.
+
+## ¿Qué debemos tener en cuenta antes de usar el paquete? {-}
+
+Antes de mostrar este proceso, es importante definir algunos conceptos para que
+usted, como usuario del paquete, pueda no solo replicar la estructura del 
+documento metodológico, sino también pueda explorar los datos e implementar
+nuevos análisis relacionados con el conflicto armado en Colombia.
+
+Así, es importante tener en cuenta los siguientes conceptos:
+
+**A. Datos observados**
+
+Son aquellos datos de la víctima que ya estaban presentes en la base integrada,
+es decir, la base que fue consolidada a partir de la información de más de 100 
+bases de datos de diversas instituciones en Colombia. Sin embargo, si bien 
+algunas víctimas cuentan con la información completa en variables como sexo, 
+edad, etc., otras víctimas presentan campos faltantes en dichas variables, 
+por ende, no tenemos certeza de cuáles fueron las características de las 
+víctimas, es decir, tenemos y siempre tendremos incertidumbre sobre el valor o 
+características reales de dichas personas.
+
+**B. Campos imputados**
+
+¿Cómo se aborda este tipo de vacío en la documentación? Se hace a través de un 
+modelo estadístico de imputación múltiple que permite tener una base de datos 
+donde ahora se observan valores *posibles* respecto a la edad de la víctima, 
+presunto responsable, etnia, etc. A estas observaciones la denominamos campos 
+o datos imputados (estadísticamente hablando. No confundir con imputación en 
+términos jurídicos).
+
+**C. Estimación del subregistro**
+
+Si bien a través de la base integrada contamos con una cantidad considerable de 
+víctimas registradas, es importante entender que aún faltan víctimas por 
+documentar: aquellas que nunca fueron registradas en ninguna de datos. Para 
+abordar el subregistro o los datos faltantes se utiliza una metodología que en 
+estadística se llama *Estimación por Sistemas Múltiples (ESM)*.
+
+## Autenticando e importando la base de datos (réplicas) {-}
+
+Se comienza autenticando e importando la base de datos de reclutamiento, esto a 
+través de dos funciones de nuestro paquete: la función `confirm_files` y 
+`read_replicates`. La primera función autentica los archivos que han sido 
+descargados de cualquier sitio en internet en el que se encuentren. Considerando
+que cada violación tiene hasta 100 réplicas, esta función permite autenticar 
+cada uno de estos archivos sin necesidad de leerlos a R. Esto, en caso de querer
+ahorrar recursos computacionales, o en caso de que no vaya a realizar su 
+análisis con todas las réplicas. Esta función devolvera el mensaje 
+_"You have the right file!"_ si los archivos son iguales a los publicados, o 
+el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ si no lo son. 
+
+```{r confirm-replicates, eval=FALSE}
+
+verdata::confirm_files(here::here("verdata-replicas/verdata-parquet"), 
+                                     "reclutamiento", 1, 10)
+
+```
+Además, la función `read_replicates` permite 2 cosas: leer las réplicas a R en
+una sola tabla (ya sea a partir de un formato *csv* o *parquet*) y la segunda 
+es verificar que el contenido de las réplicas sea exactamente igual al publicado.
+Cuando el argumento `crash` tiene su valor por default (TRUE), la función 
+retorna un objeto (base de datos) si el contenido es igual, y el mensaje
+_"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue previamente 
+alterada/modificada, lo que quiere decir que los análisis que el usuario quiera 
+hacer serán corruptos y conllevarán a resultados erróneos. Si usted quiere ver
+los datos en R, aunque el contenido haya sido alterado, puede cambiar el 
+argumento `crash` a FALSE, y, en ese caso, podrá ver los datos, junto con el 
+mismo mensaje de advertencia. 
+
+```{r open-replicates, echo = TRUE}
+
+replicas_datos <- verdata::read_replicates(here::here("verdata-replicas/verdata-parquet"), 
+                                     "reclutamiento", 1, 10)
+
+paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+Vemos pues que tenemos `r myNum(nrow(replicas_datos))` registros, nuestras réplicas 
+(o versiones de los datos) van desde la número 1 hasta la 10, vemos además que 
+nuestros datos tienen información sobre la categoría de edad de la víctima, el 
+presunto perpetrador, el sexo, el año del hecho, la pertenencia étnica, entre otros. 
+Sin embargo, para centrarnos en un análisis más específico, tal como el realizado
+para el informe metodológico, procederemos a transformar y/o filtrar 
+algunas variables. 
+
+## Filtrando las réplicas acorde con el filtro del informe metodológico {-}
+
+La función `filter_standard_cev` nos permite transformar o filtrar nuestra
+información. Por ejemplo, para el caso de reclutamiento optamos por analizar
+a las víctimas menores de 18 años, es decir, a aquellas víctimas que pertenecen
+a la categoría de infancia y adolescencia (generando la categoría "MENOR".
+Adicionalmente aquellos menores de edad que se documentaron como víctimas de 
+la ex-guerrilla FARC-EP posterior a 2016, pasaron a ser víctimas de otras
+guerrillas, ya que este primer grupo oficialmente dejó de existir después de 
+dicho año (perp_change = TRUE)
+
+```{r filter-cev, echo = TRUE}
+
+replicas_filtradas <- verdata::filter_standard_cev(replicas_datos,
+                                                   "reclutamiento", 
+                                                   perp_change = TRUE)
+
+paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+## Víctimas documentadas {-}
+
+Después de aplicada la anterior función es momento de obtener la información de 
+las víctimas documentadas por sexo. Estos datos en particular son 
+aquellos que ya venian en la base integrada y que en ocasiones contenían campos 
+faltantes en algunas de las variables. Usaremos pues la función `summary_observed`
+para calcular dicha documentación.
+
+Como se observa, los argumentos de la función son: 1) la violación a analizar 
+**reclutamiento**; 2) nuestros datos **replicas_filtradas**; 3) **strata_vars** 
+que en nuestro caso será la variable de **yy_hecho**; 4) le sigue el argumento de
+**conflict_filter** que filtra a aquellas personas que fueron víctimas
+dentro del marco del conflicto armado (variable is_conflict == TRUE) o no 
+(variable is_conflict == FALSE). Para el hecho de reclutamiento todas las víctimas
+-por defecto- fueron reclutadas dentro del este marco.
+
+Esta función también incluye un argumento denominado 5) **forced_dis_filter** el 
+cual aplica únicamente a la violación de desaparición. Esta indica si la víctima
+fue desaparecida de forma "forzada" (forced_dis == TRUE) o no (forced_dis == FALSE). 
+Para otras violaciones este argumento siempre será "FALSE". 
+
+También contamos con otros argumentos: 6) **edad_minors_filter** que filtra por 
+víctimas menores de edad (= TRUE) documentadas por los proyectos y/o instituciones;
+7) **include_props** que permite incluir el cálculo de las proporciones para
+nuestras variables de interés (= TRUE); 8) **prop_obs_na** que permite incluir 
+la proporción de NA's en nuestra tabla (= TRUE) y 9) **digits** que es un argumento 
+opcional en el cual podemos establecer el número de dígitos para redondear nuestros
+resultados (que por defecto es 2).
+
+```{r combine-observed, echo = TRUE}
+
+tabla_documentada <- verdata::summary_observed("reclutamiento",
+                                               replicas_filtradas, 
+                                               strata_vars = "sexo",
+                                               conflict_filter = TRUE,
+                                               forced_dis_filter = FALSE,
+                                               edad_minors_filter = TRUE,
+                                               include_props = TRUE,
+                                               prop_obs_na = TRUE)
+
+paged_table(tabla_documentada, options = list(rows.print = 4, cols.print = 4))
+
+```
+Posterior a esto se procede a aplicar la función de `combine_replicates` que,
+como su nombre lo indica, permite combinar las réplicas para obtener lo que 
+denominamos "la media de la estimación puntual" junto con el intervalo de 
+confianza que permite dimensionar la incertidumbre de la imputación. Para esta 
+función se siguieron las reglas de combinación de Rubin, que, si desea ver con 
+más detalle de qué se trata, el libro [Flexible Imputation of Missing Data de Stef van Buuren](https://stefvanbuuren.name/fimd/) aborda paso a paso este proceso. 
+
+Ahora, esta función se compone de los siguientes argumentos: la violación a 
+analizar **reclutamiento**; 2) **tabla_documentada**, es decir, el data frame 
+derivado de la función `summary_observed`; 3) nuestra base de datos 
+filtrada **replicas_filtradas**; 4) **strata_vars** que será nuevamente nuestra 
+variable de año del hecho; 5) **conflict_filter** que filtra a aquellas personas
+que fueron víctimas dentro del marco del conflicto armado (variable is_conflict 
+== TRUE) o no (variable is_conflict == FALSE). 
+
+Esta función también incluye un argumento denominado 5) **forced_dis_filter** el 
+cual aplica únicamente a la violación de desaparición. Esta indica si la víctima
+fue desaparecida de forma "forzada" (forced_dis == TRUE) o no (forced_dis == FALSE). 
+Para otras violaciones este argumento siempre será "FALSE". 
+
+También contamos con otros argumentos: 6) **edad_minors_filter** que filtra por 
+víctimas menores de edad (= TRUE); 7) **include_props** que permite incluir el 
+cálculo de las proporciones para nuestras variables de interés (= TRUE); 
+y 8) **digits** que es un argumento opcional en el cual podemos establecer el 
+número de dígitos para redondear nuestros resultados (que por defecto es 2).
+
+```{r combine-replicates, echo = TRUE}
+
+tabla_combinada <- verdata::combine_replicates("reclutamiento",
+                                                tabla_documentada,
+                                                replicas_filtradas, 
+                                                strata_vars = "sexo",
+                                                conflict_filter = TRUE,
+                                                forced_dis_filter = FALSE,
+                                                edad_minors_filter = TRUE,
+                                                include_props = TRUE)
+
+tabla_combinada <- tabla_combinada %>% 
+  select(sexo, observed, obs_prop_na, obs_prop, imp_lo, imp_mean, imp_hi,
+         imp_lo_p, imp_mean_p, imp_hi_p )
+
+paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
+
+```
+Vemos la primera columna referida a las víctimas que fueron registradas en las 
+bases de datos como **menores de edad**, y que sin embargo no conocemos el sexo
+de `r myNum(tabla_combinada$observed[3])` víctimas; y como se indicó, en esta
+columna excluímos víctimas mayores de 18 años y personas a las que no les 
+conocemos la edad. Estas últimas fueron objeto de la imputación estadística 
+múltiple y por tal razón vemos que en la columna **imp_mean** hay una mayor 
+cantidad de víctimas: primero porque esos `r myNum(tabla_combinada$observed[3])`
+se imputaron y por ende estas víctimas "pasaron" a algunas de las categorías de 
+sexo; y segundo porque también incluímos a esas víctimas a las que no le 
+conocíamos la edad. Es decir, recordemos que estas nuevas columnas incluyen 
+todas las víctimas, independientemente si pasaron por un proceso de imputación o no.
+
+Así, después del proceso de imputación estadística y con un con un nivel de 
+confianza del 95% se evidencia que hubo entre `r myNum(tabla_combinada$imp_lo[1])` a
+`r myNum(tabla_combinada$imp_hi[1])` víctimas hombres, con un promedio de 
+`r myNum(tabla_combinada$imp_mean[1])`. Es decir, esto implica que este 
+promedio es la mejor estimación puntual respecto al número de víctimas de 
+esta categoría, no obstante, hay que tener en cuenta que siempre tendremos la 
+incertidumbre de la imputación y que dicho fenómeno estará representado por el
+intervalo de confianza del 95%. Procedemos a estratificar para el posterior
+proceso de estimación del subregistro de víctimas.
+
+## Proceso estratificación para estimaciones {-}
+
+Con el fin de controlar la heterogeneidad  en las probabilidades de captura 
+(ver más de este concepto en el [informe metodológico](https://hrdag.org/wp-content/uploads/2022/08/20220818-fase4-informe-corrected.pdf) 
+procederemos a estratificar nuestra información.
+
+```{r estratificacion, echo = TRUE}
+
+replicas_estratos <- replicas_filtradas %>% 
+    dplyr::mutate(periodo_pres = case_when(yy_hecho >= 1990 & yy_hecho <= 1993 ~ "1990_1993",
+                                           yy_hecho >= 1994 & yy_hecho <= 1997 ~ "1994_1997",
+                                           yy_hecho >= 1998 & yy_hecho <= 2001 ~ "1998_2001",
+                                           yy_hecho >= 2002 & yy_hecho <= 2005 ~ "2002_2005",
+                                           yy_hecho >= 2006 & yy_hecho <= 2009 ~ "2006_2009",
+                                           yy_hecho >= 2010 & yy_hecho <= 2013 ~ "2010_2013",
+                                           yy_hecho >= 2014 & yy_hecho <= 2017 ~ "2014_2017",
+                                           TRUE ~ NA_character_)) %>%
+    dplyr::mutate(etnia2 = case_when(etnia %in% c('MESTIZO') ~ "MESTIZO",
+                                     etnia %in% c('INDIGENA','NARP','ROM') ~ "ETNICO",
+                                     TRUE ~ NA_character_)) %>%
+    assertr::verify(!is.na(periodo_pres)) %>%
+    assertr::verify(!is.na(etnia2)) %>%
+    assertr::verify(!is.na(sexo))
+
+
+paged_table(replicas_estratos, options = list(rows.print = 10, cols.print = 5))
+
+```
+Seguido de esto procedemos a estratificar. Es importante que usted como usuario 
+vea que este proceso es netamente artesanal, es decir, usted puede usar su propio
+código o funciones para realizar este proceso que, en nuestro caso, será a través
+de una función previamente creada (fuera del paquete `verdata`) para facilitar 
+este ejercicio:
+
+```{r estratificacion-funcion, echo = TRUE}
+
+stratify <- function(replicate_data, schema) {
+    
+    schema_list <- unlist(str_split(schema, pattern = ","))
+    
+    grouped_data <- replicate_data %>%
+        group_by(!!!syms(schema_list))
+    
+    stratification_vars <- grouped_data %>%
+        group_keys() %>%
+        group_by_all() %>%
+        group_split()
+    
+    split_data <- grouped_data %>%
+        group_split(.keep = FALSE)
+    
+    return(list(strata_data = split_data,
+                stratification_vars = stratification_vars))
+
+}
+
+```
+
+Entonces, en primera instancia creamos una función que necesita de dos (2) 
+argumentos:
+
+- La primera está relacionada con los *datos* que en nuestro caso son los
+**replicas_estratos**, es decir, la información del primer paso.
+
+- La segunda son nuestras variables (o los nombres) de estratificación 
+(**schema**). Todas estas variables se encuentran -precisamente- en nuestros 
+**replicas_estratos**.
+
+En términos generales, lo que hace esta función es: primero agrupa por nuestras
+variables de estratificación y guarda esta información en un objeto llamado 
+**grouped_data**; también definimos el nombre de nuestra estratificación, es decir
+por nuestras variables de interés. Luego, **split_data** va a dividir nuestros
+datos previamente agrupados (en **group_data**), retornando una lista: 
+**strata_data** que será lossubconjuntos de datos de acuerdo con la 
+estratificación y **stratification_vars** que contiene las combinaciones 
+(nombres) de nuestras variables.
+
+
+```{r estratificacion-continuacion, echo = TRUE}
+
+replicas <- paste0("R", 1:10)
+resultados <- list()
+
+for (replica in replicas) {
+  strata_data <- replicas_estratos[replicas_estratos$replica == replica, ]
+
+  var <- "sexo"
+  strata <- stratify(strata_data, c("periodo_pres,etnia2", var, sep = ","))
+  
+  resultados[[replica]] <- strata
+}
+
+```
+
+```{r estratificacion-continuacion2, echo = TRUE}
+
+replica6_grupo6 <- resultados[["R6"]][["strata_data"]][[6]]
+
+paged_table(replica6_grupo6, options = list(rows.print = 10, cols.print = 5))
+
+```
+```{r estratificacion-continuacion3, echo = TRUE}
+
+replica6_grupo6_estrato <- resultados[["R6"]][["stratification_vars"]][[6]]
+
+paged_table(replica6_grupo6_estrato, options = list(rows.print = 10, cols.print = 5))
+
+```
+## Estimación víctimas por año del hecho {-}
+
+Ahora, definido nuestros estratos procedemos a calcular las estimaciones para 
+esta violación en particular; acá entra nuestra función `mse` del paquete 
+`verdata`. Esta función lo que nos permite es -por ejemplo- preparar los datos: 
+como se indicó al principio, esta función tomará como insumo la información de 
+las fuentes, es decir, aquellas columnas que comienzan por `in_`. También filtra
+por las fuentes válidas, es decir, si un estrato no es estimable nos arrojará 
+`NA` lo que nos indica que ese estrato no cuenta con al menos 3 fuentes con al 
+menos un (1) registro de violencia. Además -entre otros- nos permite revisar si
+tenemos estimaciones precalculadas, lo que nos permitirá ahorrar tiempo ya que
+estas provienen de procesos de estratificación que se realizaron en la CEV.
+
+```{r mse-function, eval = FALSE}
+
+mse(
+  stratum_data,
+  stratum_name,
+  estimates_dir = NULL,
+  min_n = 1,
+  K = NULL,
+  buffer_size = 10000,
+  sampler_thinning = 1000,
+  seed = 19481210,
+  burnin = 10000,
+  n_samples = 10000,
+  posterior_thinning = 500
+)
+
+```
+
+Algunos de los argumentos de esta función se explican de la siguiente 
+forma^[Puede obtener más información de la función de `mse` escribiendo en la 
+consola de R: ?mse. Allí le aparecerá toda la información de esta función y sus 
+argumentos.]
+
+- `stratum_data`: Data frame que incluye la información del estrato de interés 
+(dataframes que creamos antes).
+
+- `stratum_name`: Es el nombre del estrato.
+
+- `estimates_dir`: Es la ruta (opcional) o el *path* de la carpeta o archivo 
+que contiene las estimaciones precalculadas.
+
+```{r estimaciones-files, echo = TRUE}
+
+estimaciones_dir <- here::here("estimaciones")
+
+```
+
+Al final el resultado será un data frame con cinco (5) columnas: una columna 
+que indica si el estrato es válido o no (`TRUE` o `FALSE`); el número de muestras
+`N` de la distribución posterior (`NA` si el estrato no es válido); las fuentes
+válidas que se usaron en la estimación `valid_sources`; el número de observaciones
+de las listas que son válidas del estrato (`n_obs`) y el nombre del estrato 
+`stratum_name`. Si un estrato es estimable, este dataframe va a contener 1000
+muestras para cada estrato. Esto lo veremos en un momento.
+
+```{r estimaciones, echo = TRUE}
+
+estimaciones <- list() 
+
+for (replica in replicas) {
+    
+    strata_data <- resultados[[replica]]$strata_data
+    stratification_vars <- resultados[[replica]]$stratification_vars
+    
+    estimate_mse <- map2_dfr(.x = strata_data,
+                             .y = stratification_vars,
+                             .f = ~ {
+                               mse <- verdata::mse(stratum_data = .x,
+                                                   stratum_name = .y,
+                                                   estimates_dir = estimaciones_dir)
+                               mse$replica <- replica
+                               mse
+                           })
+    
+    estimaciones[[replica]] <- estimate_mse
+}
+
+union_mse <- do.call(rbind, estimaciones)
+
+union_mse <- union_mse %>%
+    mutate(stratum_name = paste(pull(stratum_name, 1),
+                                pull(stratum_name, 2),
+                                pull(stratum_name,3),
+                                sep = "-"))
+
+paged_table(union_mse, options = list(rows.print = 10, cols.print = 5))
+
+```
+Estos son los resultados de `mse`. Vemos las cinco (5) primeras columnas 
+mencionadas en el que cabe destacar que todos los estratos son válidos, 
+es decir, no vemos ningún _NA_ en nuestras columnas; lo que indica que en 
+cada estrato hay al menos 3 listas con al menos 1 víctima. Además, vemos 
+nuestro *N* el cual evidencia 1000 muestras aleatorias de la distribución 
+posterior de la cantidad de víctimas probables para cada estrato y réplica 
+(por ejemplo, 1000 números (o resultados) en *N* para el estrato 
+*1990_1993-ETNICO-HOMBRE* para la réplica 1):
+
+```{r estimaciones-ejemplo, echo = TRUE}
+
+union_mse_summary <- union_mse %>% 
+    filter(replica == "R1") %>% 
+    group_by(stratum_name) %>% 
+    summarize(N_estimaciones = n())
+
+paged_table(union_mse_summary, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+## Análisis de la distribución posterior {-}
+
+Ahora, lo que sigue - que es un paso opcional - es análizar estos resultados 
+desde el punto de vista visual, esto a través de una gráfica de densidad la cual
+nos va a permitir ver - gráficamente - la muestra de la distribución posterior 
+para _N_. Para esto tomaremos -por ejemplo- la réplica 1 (*R1*) y el estrato 
+*1998_2001-ETNICO-HOMBRE*:
+
+```{r densidad-ejemplo, echo = TRUE, comment = NA, message= FALSE, warning = FALSE}
+
+tabla_grafica <- union_mse %>% 
+    filter(replica == "R1") %>% 
+    filter(stratum_name == "1998_2001-ETNICO-HOMBRE") 
+
+densidad_graph <- tabla_grafica %>% 
+    ggplot() +
+    geom_density(aes(x = N), color = "black") +
+    theme_minimal() 
+
+densidad_graph
+```
+Vemos varias cosas: lo primero es que tuvimos muestras menores a 600 y algunas 
+de las muestras fueron mayores a 1000. La incertidumbre es menor hacia la parte
+izquierda de la distribución, ya que el número minimo que estimamos con LCMCR 
+es el número documentado. Es decir, no es posible ni lógico que los resultados
+evidencien estimaciones menores al número documentado, que para este estrato en
+particular es `r myNum(tabla_grafica$n_obs[1])`. Esta situación es opuesta para
+el límite superior el cual puede ser mucho mayor (pero no mayor a la población
+colombiana). Por esta razón en este y otros ejemplos veremos que el límite 
+superior (que lo abordaremos en la próxima sección) presenta más variación 
+(y por tanto incertidumbre) que el límite inferior, es decir, gráficamente 
+y analíticamente hablando nuestras distribuciones no siempre serán simétricas. 
+
+Otra característica que podemos observar es que no hay multimodalidad en este
+estrato, es decir, no vemos dos o más picos en nuestra distribución (es unimodal),
+por lo que podemos inferir que este es un estrato con heterogeneidad controlada.
+No obstante, vemos que hay varianza (pero no considerable), es decir una mayor 
+-pero no exagerada- dispersión de las muestras.
+
+## Combinación de las estimaciones {-}
+
+Nuestro último paso es combinar nuestras estimaciones. Esto lo haremos a través 
+de nuestra función `combine_estimates` el cual permite obtener los intervalos 
+creibles (no de confianza). Pero antes, debemos realizar una pequeña transformación
+a nuestra anterior tabla `union_mse`, esto con el fin de obtener nuestros
+resultados desagregados por sexo (y proceder luego a combinar). Esto lo 
+presentaremos a continuación:
+
+```{r combinacion-transformacion, echo = TRUE}
+
+tabla_sampler <- union_mse %>%
+    separate(stratum_name, into = c("periodo_pres", "etnia2", "sexo"), 
+             sep = "-", remove = FALSE) %>% 
+    rename(replicate = replica) %>% 
+    group_by(stratum_name, replicate) %>% 
+    mutate(sample_number = glue("sample_{row_number()}")) %>% 
+    pivot_wider(id_cols = c("replicate", "stratum_name", "sexo", "n_obs"),
+                values_from = N,
+                names_from = sample_number) 
+
+paged_table(tabla_sampler, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+En primera instancia vemos que la función `separate` del paquete `tidyr` nos 
+separa la columna de `stratum_name` en tres (3) nuevas columnas: `periodo_pres`,
+`etnia2` y `sexo`, luego agrupamos por nuestra columna `stratum_name` y cada una
+de nuestras 10 réplicas. 
+
+Adicionalmente generamos una columna denominada `sample_number` en el que 
+*{row_number()}* corresponde a cada fila de *N*. Es decir, articulando esto con
+nuestra siguiente línea de código, vemos que `pivot_wider` convierte nuestro 
+dataframe de un formato largo a ancho, o, en otras palabras, los valores que 
+están en *N* se "trasladan" a las columnas que comienzan por *sample_*. Como 
+habíamos explicado anteriormente, cada estrato (por ejemplo *1990_1993-ETNICO-HOMBRE*
+para la réplica (R1) contiene 1000 muestras aleatorias de la distribución 
+posterior, por lo que cada valor de este *N* se expanderá a cada columna de 
+`sample_` y por tanto, esas serán 1000 columnas, desde `sample_1` hasta `sample_1000`.
+
+Teniendo esta transformación, procederemos a agrupar por nuestra variable de 
+interés (sexo) y réplica, seguido de la suma de estas muestras de la distribución
+posterior de cada estrato que forma parte de este agrupamiento. 
+
+```{r combinacion-transformacion2, echo = TRUE}
+
+tabla_sexo <- tabla_sampler %>% 
+    group_by(sexo, replicate) %>% 
+    summarize(across(c(starts_with("sample_"), "n_obs"), sum)) 
+
+paged_table(tabla_sexo, options = list(rows.print = 10, cols.print = 5))
+
+```
+En otras palabras, primero agrupamos por sexo y réplica, es decir -por ejemplo-
+agrupar por "HOMBRE" y la réplica 1, "HOMBRE" y réplica 2, y así sucesivamente.
+Cuando tengamos este tipo de agrupación (como lo vemos en la *tabla_sexo*) 
+tomaremos -por ejemplo- la réplica 1 ("R1") y la categoría "HOMBRE" y sumaremos
+los valores para el `sample_` (es como tomar: 
+`ejemplo <- tabla_sampler %>% filter(replicate == "R1", sexo == "HOMBRE")` y 
+sumar: `sum(ejemplo$sample_1)`, dandonos lo que nos está arrojando la primera 
+fila de la columna `sample_1`, es decir, `r myNum(tabla_sexo$sample_1[1])`).
+
+Sumado a esto, volveremos a transformar nuestros datos de ancho a largo, es 
+decir, volveremos a una estructura muy parecida a *tabla_sampler*, pero esta
+vez nuestro *N* muestra la suma de las muestras de la distribución posterior
+por sexo y réplica que hicimos en el paso anterior:
+
+```{r combinacion-transformacion3, echo = TRUE}
+
+sexo_group <- tabla_sexo %>%
+    group_by(sexo) %>%
+    pivot_longer(starts_with("sample_"), 
+                 names_to = "replicate_num", 
+                 values_to = "N") %>%
+    ungroup() %>%
+    select(-replicate_num) %>%
+    rename(stratum_name = sexo) 
+
+paged_table(sexo_group, options = list(rows.print = 10, cols.print = 5))
+
+```
+Para finalizar, vemos que esta información está desagregada por sexo y réplica,
+pero, como sabemos, deseamos ver los resultados únicamente por sexo. Por tal 
+razón agruparemos esta información por sexo (que ahora se denomina `stratum_name`): 
+
+```{r combinacion-final, echo = TRUE}
+
+final_agrupacion <- sexo_group %>%
+    group_by(stratum_name)
+
+estimates_tabla_sexo <- final_agrupacion %>%
+    group_split() %>%
+    map_dfr(.f = combine_estimates) %>%
+    mutate(est_lo_p = round(N_025/sum(N_mean), digits = 2)) %>%
+    mutate(est_lo_p = ifelse(est_lo_p < 0, 0, est_lo_p)) %>%
+    mutate(est_mn_p = round(N_mean/sum(N_mean), digits = 2)) %>%
+    mutate(est_hi_p = round(N_975/sum(N_mean), digits = 2)) %>%
+    mutate(est_hi_p = ifelse(est_hi_p > 1, 1, est_hi_p)) %>% 
+    bind_cols(group_keys(final_agrupacion))
+
+paged_table(estimates_tabla_sexo, options = list(rows.print = 4, cols.print = 5))
+```
+
+Vemos pues que, después de agrupar, tenemos los resultados derivados de
+`estimates_tabla_sexo` cuyo código permite separar nuestras categorías 
+(hombre y mujer), luego utilizamos la función de `map_dfr` en el que podemos 
+aplicar `combine_estimates` a cada una de nuestras categorías. Además, calculamos 
+las proporciones para cada columna en el que nos aseguramos que las proporciones
+no sean menores a cero (respecto al límite inferior) y mayores a 1 (respecto al
+límite superior). Por último -con `bind_cols`- unimos estos resultados con las
+variables de agrupación, es decir, con `sexo` que la denominamos `stratum_name`. 
+
+Así, por ejemplo, podemos observar que el número de víctimas mujeres -menores de
+edad- de reclutamiento está dentro del rango de `r myNum(estimates_tabla_sexo$N_025[2])`
+y `r myNum(estimates_tabla_sexo$N_975[2])`, con una probabilidad del 95%, siendo `r myNum(estimates_tabla_sexo$N_mean[2])` el valor más probable, es decir, el promedio. 

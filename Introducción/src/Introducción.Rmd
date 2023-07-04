@@ -33,7 +33,7 @@ el que debe hacerse según su necesidad.
 
 Antes de empezar a trabjar con los datos, es importante definir algunos conceptos 
 para que usted, como usuario del paquete, pueda no solo replicar los cálculos del  
-[anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)así como el resto de cifras presentadas en el [Informe Final de la Comisión de la Verdad](https://www.comisiondelaverdad.co/hay-futuro-si-hay-verdad), 
+[anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag) así como el resto de cifras presentadas en el [Informe Final de la Comisión de la Verdad](https://www.comisiondelaverdad.co/hay-futuro-si-hay-verdad), 
 sino también pueda explorar los datos e implementar nuevos análisis relacionados 
 con el conflicto armado en Colombia.
 
