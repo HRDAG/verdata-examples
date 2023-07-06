@@ -224,6 +224,6 @@ cálculo de la combinación de las imputaciones acorde con las reglas de
 ```{r save-observed, echo = TRUE}
 
 arrow::write_parquet(tabla_documentada,
-                     here::here("CO-examples/Resultados-CEV/Documentados/output-documentados/secuestro-anio-documentado.parquet"))
+                     here::here("Resultados-CEV/Documentados/output-documentados/secuestro-anio-documentado.parquet"))
 
 ```

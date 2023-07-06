@@ -232,12 +232,12 @@ Por último, gurdamos los resultados (en formato *.parquet*)
 en una carpeta denominada "output-imputados", ya que 
 esta tabla nos servirá como insumo para dimensionar (a nivel gráfico) los patrones
 de documentación de la violencia (como este y el anterior ejemplo) en contraste 
-con los patrones de violencia a partir de la [estimación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Documentados/output/homicidio-anio-estimacion.html) y posterior [combinacion](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Documentados/output/homicidio-anio-documentado.html).
+con los patrones de violencia a partir de la [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Documentados/output/homicidio-anio-estimacion.html).
 
 ```{r save-observed, echo = TRUE}
 
 arrow::write_parquet(tabla_combinada,
-                     here::here("Resultados-CEV/Documentados/output-imputados/homicidio-anio-imputados.parquet"))
+                     here::here("Resultados-CEV/Imputacion/output-imputados/homicidio-anio-imputados.parquet"))
 ```
 
 ## Ejercicio {-}

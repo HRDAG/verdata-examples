@@ -92,7 +92,7 @@ en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia.
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-replicas/verdata-parquet"),
+replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/reclutamiento"),
                                            "reclutamiento", 1, 10)
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
@@ -134,9 +134,7 @@ para esta misma variable (con la función `summary_observed`). Esta información
 
 ```{r import-observed, echo = TRUE}
 
-tabla_documentada <-  arrow::read_parquet(here::here("Resultados-CEV/output-documentados/reclutamiento-anio-documentado.parquet"))
-
-#tabla_documentada <- tabla_documentada %>% mutate(yy_hecho = as.character(yy_hecho))
+tabla_documentada <-  arrow::read_parquet(here::here("Resultados-CEV/Documentados/output-documentados/reclutamiento-anio-documentado.parquet"))
 
 paged_table(tabla_documentada, options = list(rows.print = 10, cols.print = 5))
 
@@ -234,12 +232,12 @@ Por último, gurdamos los resultados (en formato *.parquet*)
 en una carpeta denominada "output-imputados", ya que 
 esta tabla nos servirá como insumo para dimensionar (a nivel gráfico) los patrones
 de documentación de la violencia (como este y el anterior ejemplo) en contraste 
-con los patrones de violencia a partir de la [estimación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Documentados/output/reclutamiento-anio-estimacion.html) y posterior [combinacion](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Documentados/output/reclutamiento-anio-documentado.html).
+con los patrones de violencia a partir de la [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Documentados/output/reclutamiento-anio-estimacion.html).
 
 ```{r save-observed, echo = TRUE}
 
 arrow::write_parquet(tabla_combinada,
-                     here::here("Resultados-CEV/Documentados/output-imputados/reclutamiento-anio-imputados.parquet"))
+                     here::here("Resultados-CEV/Imputacion/output-imputados/reclutamiento-anio-imputados.parquet"))
 ```
 
 ## Ejercicio {-}

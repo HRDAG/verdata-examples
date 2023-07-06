@@ -92,7 +92,7 @@ en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia.
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-replicas/verdata-parquet"),
+replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/secuestro"),
                                            "secuestro", 1, 10)
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
@@ -234,12 +234,12 @@ Por último, gurdamos los resultados (en formato *.parquet*)
 en una carpeta denominada "output-imputados", ya que 
 esta tabla nos servirá como insumo para dimensionar (a nivel gráfico) los patrones
 de documentación de la violencia (como este y el anterior ejemplo) en contraste 
-con los patrones de violencia a partir de la [estimación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Documentados/output/secuestro-anio-estimacion.html) y posterior [combinacion](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Documentados/output/secuestro-anio-documentado.html).
+con los patrones de violencia a partir de la [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Documentados/output/secuestro-anio-estimacion.html).
 
 ```{r save-observed, echo = TRUE}
 
 arrow::write_parquet(tabla_combinada,
-                     here::here("Resultados-CEV/Documentados/output-imputados/secuestro-anio-imputados.parquet"))
+                     here::here("Resultados-CEV/Imputacion/output-imputados/secuestro-anio-imputados.parquet"))
 ```
 
 ## Ejercicio {-}

@@ -1,0 +1,222 @@
+---
+title: "Proceso de cálculo de víctimas imputadas"
+subtitle: "Secuestros desagregado por sexo - 1990–2018"
+output:
+  rmdformats::robobook:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+    gallery: true
+    use_bookdown: true
+    highlight: kate
+    embed_fonts: false
+knit: (function(inputFile, encoding) {rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output") })
+---
+
+```{r setup, echo = TRUE,include = FALSE}
+
+pacman::p_load(ggplot2, dplyr, rmarkdown, verdata, LCMCR, here,
+               arrow, dplyr, rlang, purrr, glue, tidyr, stringr, 
+               gridExtra)
+
+options(warn = -1)
+```
+
+```{r numbers, include = FALSE}
+
+myNum <- function(n) {
+  return(prettyNum(n, big.mark = " "))
+}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+```
+
+```{r library, include=TRUE}
+
+library(verdata)
+
+```
+
+## Introducción {-}
+
+Si es su primera vez trabajando con los datos, no está muy familiarizado con el 
+paquete o simplemente quiere conocer más sobre el proyecto y el objetivo de 
+estos ejemplos y el paquete `verdata`, consulte:
+https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducción.html 
+antes de continuar. 
+
+En este ejemplo, se ilustrará el proceso para obtener los datos imputados de 
+la presente violación. Específicamente, se replicará la tabla 10 de la página 16 del
+[anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag).
+
+## Autenticando e importando la base de datos (réplicas) {-}
+
+Se comienza autenticando e importando la base de datos, esto a 
+través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
+`read_replicates`. La autenticación de los datos es pertinente dado que estos 
+fueron publicados con la licencia de atribución 4.0 internacional de Creative 
+Commons (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
+información. Considerando que usted pudo haber llegado a estos datos por medio 
+de diferentes fuentes, es importante que sepa si han sido modificados o no, para 
+lo que puede hacer uso de estas dos funciones. 
+
+La función `confirm_files` autentica los archivos que han sido descargados. 
+Considerando que cada violación tiene hasta 100 réplicas, esta función permite
+autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en 
+caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
+realizar su análisis con todas las réplicas. Esta función devolvera el mensaje 
+_"You have the right file!"_ si los archivos son iguales a los publicados, o 
+el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ si no lo son. 
+
+```{r confirm-replicates, eval=FALSE}
+
+verdata::confirm_files(here::here("verdata-parquet/secuestro"), 
+                                  "secuestro", 1, 10)
+
+```
+
+Además, la función `read_replicates` permite 2 cosas: leer las réplicas a R en
+una sola tabla (ya sea a partir de un formato *csv* o *parquet*) y verificar 
+que el contenido de las réplicas sea exactamente igual al publicado.
+Cuando el argumento `crash` tiene su valor por default (TRUE), la función 
+retorna un objeto (data frame) si el contenido es igual, y el mensaje
+_"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue 
+previamente alterado/modificada, lo que quiere decir que los análisis que el 
+usuario realice hacer serán inconsistentes y llevarán a resultados erróneos. 
+Este último error significa que nos datos no se han leído a R. Si por alguna 
+razón, usted quiere leer los datos a pesar de saber que no son los mismos datos 
+originamente publicados, puede cambiar el argumento `crash` a FALSE, y, 
+en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia. 
+
+```{r open-replicates, echo = TRUE}
+
+replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/secuestro"),
+                                           "secuestro", 1, 10)
+
+paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+Vemos que tenemos `r myNum(nrow(replicas_datos))` registros, nuestras réplicas 
+van desde la número 1 hasta la 10. Además, nuestros datos tienen información 
+sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
+el año del hecho, la pertenencia étnica, entre otros. 
+Sin embargo, para centrarnos en un análisis más específico, como el del informe
+metodológico, procederemos a transformar y/o filtrar algunas variables. 
+
+## Filtrando las réplicas acorde con el filtro del informe metodológico {-}
+
+La función `filter_standard_cev` nos permite transformar o filtrar la
+información. Por ejemplo, aquellas víctimas que se documentaron como víctimas 
+de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a ser víctimas de 
+otras guerrillas, ya que este primer grupo oficialmente dejó de existir después 
+de dicho año (`perp_change` = TRUE)
+
+```{r filter-cev, echo = TRUE}
+
+replicas_filtradas <- verdata::filter_standard_cev(replicas_datos,
+                                                   "secuestro", 
+                                                   perp_change = TRUE)
+
+paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+## Víctimas documentadas {-}
+
+Después de aplicado el filtro, es momento de obtener una tabla con la información
+documentada, la misma que se obtuvo en el [ejemplo sobre víctimas documentadas](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Documentados/output/secuestro-sexo-documentado.html) sobre el cálculo de víctimas documentadas para 
+esta misma variable (con la función `summary_observed`). Esta información 
+-previamente calculada- la importaremos desde la carpeta "output-documentados". 
+
+```{r import-observed, echo = TRUE}
+
+tabla_documentada <- arrow::read_parquet(here::here("Resultados-CEV/Documentados/output-documentados/secuestro-sexo-documentado.parquet"))
+
+paged_table(tabla_documentada, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+Posterior a esto se aplica la función de `combine_replicates` que,
+como su nombre lo indica, permite combinar las réplicas para obtener lo que 
+denominamos "la media de la estimación puntual" junto con el intervalo de 
+confianza que permite dimensionar la incertidumbre de la imputación. Para esta 
+función se siguieron las reglas de combinación de Rubin, que, si desea estudiar con 
+más detalle de qué se trata, el libro [Flexible Imputation of Missing Data de Stef van Buuren](https://stefvanbuuren.name/fimd/) aborda paso a paso este proceso. 
+
+Ahora, esta función se compone de los siguientes argumentos: la violación a 
+analizar; 2) **tabla_documentada**, es decir, el data frame 
+derivado de la función `summary_observed`; 3) la base de datos 
+filtrada **replicas_filtradas**; 4) **strata_vars** que será nuevamente nuestra 
+variable de interés; 5) **conflict_filter** que filtra a aquellas personas
+que fueron víctimas dentro del marco del conflicto armado (variable `is_conflict` 
+== TRUE) o no (variable `is_conflict` == FALSE). 
+
+Esta función también incluye un argumento denominado 5) **forced_dis_filter** que 
+cual aplica únicamente a la violación de desaparición. Esta indica si la víctima
+fue desaparecida de forma "forzada" (`forced_dis` == TRUE) o no (`forced_dis` == FALSE). 
+Para otras violaciones este argumento siempre será "FALSE". 
+
+También contamos con otros argumentos: 6) **edad_minors_filter** que filtra por 
+víctimas menores de edad (`edad_minors_filter` == TRUE); 7) **include_props** 
+que permite incluir el cálculo de las proporciones para nuestras variables de 
+interés (`include_props` == TRUE); y 8) **digits** que es un argumento opcional 
+con el cual se puede establecer el número de dígitos para redondear los 
+resultados (que por defecto es 2).
+
+```{r combine-replicates, echo = TRUE}
+
+tabla_combinada <- verdata::combine_replicates("secuestro",
+                                                tabla_documentada,
+                                                replicas_filtradas, 
+                                                strata_vars = "sexo",
+                                                conflict_filter = TRUE,
+                                                forced_dis_filter = FALSE,
+                                                edad_minors_filter = FALSE,
+                                                include_props = TRUE)
+
+tabla_combinada <- tabla_combinada %>% 
+  select(sexo, observed, obs_prop_na, obs_prop, imp_lo, imp_mean, imp_hi,
+         imp_lo_p, imp_mean_p, imp_hi_p )
+
+paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
+
+```
+Vemos la primera columna referida a las víctimas que fueron registradas en las 
+bases de datos como vinculadas al conflicto armado, y que sin embargo no 
+conocemos el sexo de `r myNum(tabla_combinada$observed[3])` víctimas; y como 
+se indicó en el ejemplo anterior, en esta columna excluímos víctimas no vinculadas
+al conflicto y víctimas que tenían campos faltantes allí. Estas últimas fueron 
+objeto de la imputación estadística múltiple y por tal razón vemos que en 
+la columna **imp_mean** hay una mayor cantidad de víctimas ya que estas
+`r myNum(tabla_combinada$observed[3])` se imputaron y por ende estas víctimas 
+"pasaron" a algunas de las categorías de nuestro interés; Es decir, recordemos 
+que estas nuevas columnas incluyen todas las víctimas, independientemente si 
+pasaron por un proceso de imputación o no.
+
+Así, después del proceso de imputación estadística y con un con un nivel de 
+confianza del 95% se evidencia que hubo entre `r myNum(tabla_combinada$imp_lo[1])` a
+`r myNum(tabla_combinada$imp_hi[1])` víctimas hombres, con un promedio de 
+`r myNum(tabla_combinada$imp_mean[1])`. Es decir, esto implica que este 
+promedio es la mejor estimación puntual respecto al número de víctimas de 
+esta categoría, no obstante, hay que tener en cuenta que siempre tendremos la 
+incertidumbre de la imputación y que dicho fenómeno estará representado por el
+intervalo de confianza del 95%.
+
+Por último, guardamos los resultados (en formato *.parquet*) en una carpeta 
+denominada "output-imputados", ya que esta tabla nos servirá como insumo para 
+dimensionar los patrones de documentación de la violencia (como este y el anterior
+ejemplo) en contraste con los patrones de violencia a partir de la [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/secuestro-sexo-estimacion.html)
+
+```{r save-observed, echo = TRUE}
+
+arrow::write_parquet(tabla_combinada,
+                     here::here("Resultados-CEV/Imputacion/output-imputados/secuestro-sexo-imputados.parquet"))
+```
+
+## Ejercicio {-}
+
+Acorde con la anterior interpretación, ¿cómo interpretaría los resultados 
+para las demás categorías?
