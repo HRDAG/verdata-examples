@@ -1,0 +1,596 @@
+---
+title: "Hallazgos estadísticos. Víctimas documentadas, imputadas y estimación del subregistro"
+subtitle: "Desaparición forzada (1985-2016)"
+output:
+  rmdformats::robobook:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+    gallery: true
+    use_bookdown: true
+    highlight: kate
+    embed_fonts: false
+knit: (function(inputFile, encoding) {rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output") })
+---
+
+```{r setup, echo = TRUE,include = FALSE}
+
+pacman::p_load(ggplot2, dplyr, rmarkdown, LCMCR, here, arrow, dplyr, rlang, 
+               purrr, glue, tidyr, stringr, gridExtra)
+
+options(warn = -1)
+
+```
+
+```{r numbers, include = FALSE}
+
+myNum <- function(n) {
+  return(prettyNum(n, big.mark = " "))
+}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+```
+
+```{r library, include=TRUE}
+
+library(verdata)
+
+```
+
+## Introducción {-}
+
+Si es su primera vez trabajando con los datos, no está muy familiarizado con el 
+paquete o simplemente quiere conocer más sobre el proyecto y el objetivo de 
+estos ejemplos y el paquete `verdata`, consulte:
+https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducción.html 
+antes de continuar. 
+
+En este ejemplo, se ilustrará el proceso para obtener los datos observados imputados 
+y la estimación por año del subregistro de víctimas de desaparición forzada. 
+Específicamente, se replicará la figura (sup-izq) de la página 12 del [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag).
+
+## Autenticando e importando la base de datos (réplicas) {-}
+
+Se comienza autenticando e importando la base de datos de desaparición, esto a 
+través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
+`read_replicates`. La autenticación de los datos es pertinente dado que estos 
+fueron publicados con la licencia de atribución 4.0 internacional de Creative 
+Commons (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
+información. Considerando que usted pudo haber llegado a estos datos por medio 
+de diferentes fuentes, es importante que sepa si han sido modificados o no, para 
+lo que puede hacer uso de estas dos funciones. 
+
+La función `confirm_files` autentica los archivos que han sido descargados. Considerando
+que cada violación tiene hasta 100 réplicas, esta función permite autenticar 
+cada uno de estos archivos sin necesidad de leerlos a R. Esto, en caso de querer
+ahorrar recursos computacionales, o en caso de que no vaya a realizar su 
+análisis con todas las réplicas. Esta función devolvera el mensaje 
+_"You have the right file!"_ si los archivos son iguales a los publicados, o 
+el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ si no lo son. 
+
+```{r confirm-replicates, eval=FALSE}
+
+verdata::confirm_files(here::here("verdata-replicas/verdata-parquet"), 
+                                  "desaparicion", 1, 10)
+
+```
+
+Además, la función `read_replicates` permite 2 cosas: leer las réplicas a R en
+una sola tabla (ya sea a partir de un formato *csv* o *parquet*) y verificar 
+que el contenido de las réplicas sea exactamente igual al publicado.
+Cuando el argumento `crash` tiene su valor por default (TRUE), la función 
+retorna un objeto (data frame) si el contenido es igual, y el mensaje
+_"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue 
+previamente alterado/modificada, lo que quiere decir que los análisis que el 
+usuario realice hacer serán inconsistentes y llevarán a resultados erróneos. 
+Este último error significa que nos datos no se han leído a R. Si por alguna 
+razón, usted quiere leer los datos a pesar de saber que no son los mismos datos 
+originamente publicados, puede cambiar el argumento `crash` a FALSE, y, 
+en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia. 
+
+```{r open-replicates, echo = TRUE}
+
+replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/desaparicion"),
+                                           "desaparicion", 1, 10)
+
+paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+Vemos que tenemos `r myNum(nrow(replicas_datos))` registros, nuestras réplicas 
+van desde la número 1 hasta la 10. Además, nuestros datos tienen información 
+sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
+el año del hecho, la pertenencia étnica, entre otros. 
+Sin embargo, para centrarnos en un análisis más específico, tal como el realizado
+para el informe metodológico, procederemos a transformar y/o filtrar 
+algunas variables. 
+
+## Filtrando las réplicas acorde con el filtro del informe metodológico {-}
+
+La función `filter_standard_cev` nos permite transformar o filtrar la
+información. Por ejemplo, aquellas víctimas que se documentaron como víctimas 
+de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a ser víctimas de 
+otras guerrillas, ya que este primer grupo oficialmente dejó de existir después 
+de dicho año (`perp_change` = TRUE)
+
+```{r filter-cev, echo = TRUE}
+
+replicas_filtradas <- verdata::filter_standard_cev(replicas_datos,
+                                                   "desaparicion", 
+                                                   perp_change = TRUE)
+
+paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+## Víctimas documentadas {-}
+
+Después de aplicados los filtros necesarios con la función anterior, es momento 
+de obtener la información de las víctimas documentadas por  año del hecho. 
+Estos datos son aquellos que ya se observaban en la base integrada y que 
+en ocasiones contenían campos faltantes en algunas de las variables. 
+Usaremos la función `summary_observed` para calcular dicha documentación.
+
+Como se puede ver, los argumentos de la función son: 1) la violación a analizar 
+**desaparicion**; 2) los datos **replicas_filtradas**; 3) **strata_vars**,
+que para este ejemplo será la variable de **yy_hecho**, porque estamos analizando 
+la desaparición por año; 4) le sigue el argumento de
+**conflict_filter** que filtra a aquellas personas que fueron víctimas
+dentro del marco del conflicto armado (variable `is_conflict` == TRUE) o no 
+(variable `is_conflict` == FALSE).
+
+Esta función también incluye un argumento denominado 5) **forced_dis_filter**, que 
+aplica únicamente a esta violación. Esta indica si la víctima fue desaparecida
+de forma forzada (`forced_dis` == TRUE) o no (`forced_dis` == FALSE). 
+Para otras violaciones este argumento siempre será FALSE. 
+
+También contamos con otros argumentos: 6) **edad_minors_filter** que filtra por 
+víctimas menores de edad (`edad_minors_filter` = TRUE) documentadas por los 
+proyectos y/o instituciones; 7) **include_props** que permite incluir el cálculo 
+de las proporciones para las variables de interés (`include_props` = TRUE); 
+8) **prop_obs_na** que permite incluir la proporción de NA's en la tabla 
+(`prop_obs_na` = TRUE) y 9) **digits** que es un argumento opcional en el cual 
+podemos establecer el número de dígitos para redondear los resultados (que por
+defecto es 2).
+
+```{r combine-observed, echo = TRUE}
+
+tabla_documentada <- verdata::summary_observed("desaparicion",
+                                               replicas_filtradas, 
+                                               strata_vars = "yy_hecho",
+                                               conflict_filter = TRUE,
+                                               forced_dis_filter = TRUE,
+                                               edad_minors_filter = FALSE,
+                                               include_props = FALSE,
+                                               prop_obs_na = FALSE)
+
+paged_table(tabla_documentada, options = list(rows.print = 4, cols.print = 4))
+
+```
+
+```{r graph-observed, echo = TRUE}
+
+tabla_documentada <- tabla_documentada %>%
+    mutate(yy_hecho = as.numeric(yy_hecho)) %>% 
+    arrange(desc(observed))
+
+g <- tabla_documentada %>%
+    ggplot(aes(x = yy_hecho)) +
+    geom_line(aes(y = observed, color = "Observado"),  size = 1) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 11, angle = 90),
+          axis.title.y = element_text(size = 11),
+          axis.ticks.x = element_line(size = 0.1)) +
+    scale_x_continuous(breaks = seq(1980, 2016, 2)) +
+    theme(legend.position = "bottom") +
+    labs(x = "Año",
+         y = "Número de víctimas",
+         color = "") +
+    scale_colour_manual(values = c("Observado" = "#434343"))
+
+g
+
+```
+
+Posterior a esto se aplica la función de `combine_replicates` que,
+como su nombre lo indica, permite combinar las réplicas para obtener lo que 
+denominamos "la media de la estimación puntual" junto con el intervalo de 
+confianza que permite dimensionar la incertidumbre de la imputación. Para esta 
+función se siguieron las reglas de combinación de Rubin, que, si desea estudiar con 
+más detalle de qué se trata, el libro [Flexible Imputation of Missing Data de Stef van Buuren](https://stefvanbuuren.name/fimd/) aborda paso a paso este proceso. 
+
+Ahora, esta función se compone de los siguientes argumentos: la violación a 
+analizar **desaparicion**; 2) **tabla_documentada**, es decir, el data frame 
+derivado de la función `summary_observed`; 3) la base de datos 
+filtrada **replicas_filtradas**; 4) **strata_vars** que será nuevamente la 
+variable de año del hecho; 5) **conflict_filter** que filtra a aquellas personas
+que fueron víctimas dentro del marco del conflicto armado (variable `is_conflict` 
+== TRUE) o no (variable `is_conflict` == FALSE). 
+
+Esta función también incluye un argumento denominado 5) **forced_dis_filter** que 
+cual aplica únicamente a la violación de desaparición. Esta indica si la víctima
+fue desaparecida de forma "forzada" (`forced_dis` == TRUE) o no (`forced_dis` == FALSE). 
+Para otras violaciones este argumento siempre será "FALSE". 
+
+También contamos con otros argumentos: 6) **edad_minors_filter** que filtra por 
+víctimas menores de edad (`edad_minors_filter` == TRUE); 7) **include_props** 
+que permite incluir el cálculo de las proporciones para nuestras variables de 
+interés (`include_props` == TRUE); y 8) **digits** que es un argumento opcional 
+con el cual se puede establecer el número de dígitos para redondear los 
+resultados (que por defecto es 2).
+
+```{r combine-replicates, echo = TRUE}
+
+tabla_combinada <- verdata::combine_replicates("desaparicion",
+                                                tabla_documentada,
+                                                replicas_filtradas, 
+                                                strata_vars = "yy_hecho",
+                                                conflict_filter = TRUE,
+                                                forced_dis_filter = TRUE,
+                                                edad_minors_filter = FALSE,
+                                                include_props = FALSE)
+
+paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
+
+```
+```{r graph-replicates, echo = TRUE}
+
+tabla_combinada <- tabla_combinada %>% 
+     arrange(desc(imp_mean))
+
+g <- tabla_combinada %>%
+    mutate(yy_hecho = as.numeric(yy_hecho)) %>% 
+    ggplot(aes(x = yy_hecho)) +
+    geom_line(aes(y = observed, color = "Observado"),  size = 1) +
+    geom_line(aes(y = imp_mean,  color = "Imputado"), size = 1) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 11, angle = 90),
+        axis.title.y = element_text(size = 11),
+        axis.ticks.x = element_line(size = 0.1)) +
+    scale_x_continuous(breaks = seq(1980, 2016, 2)) +
+    theme(legend.position = "bottom") +
+    labs(x = "Año",
+         y = "Número de víctimas",
+         color = "") +
+    scale_colour_manual(values = c("Imputado" = "#1F74B1", 
+                               "Observado" = "#434343"))
+
+g
+
+```
+
+Como se indicó, la línea de color negro muestra los datos
+documentados; esta documentación se refiere a víctimas de las cuales sabemos 
+que efectivamente fueron víctimas dentro del marco del conflicto y que fueron 
+desaparecidas de forma forzada; pero, ¿qué hay de las víctimas
+sin información acerca de estas características? Pues bien, esta información 
+(junto con la ya documentada) se encuentra en la línea azul, la cual muestra 
+las víctimas después del proceso de imputación múltiple. Es decir, como se indicó
+anteriormente, esta línea incluye víctimas para las cuales no teníamos información inicialmente, pero el proceso de imputación determinó que si pertenecen al conflicto.
+
+Así, después del proceso de imputación estadística y con un con un nivel de 
+confianza del 95% se evidencia que hubo entre `r myNum(tabla_combinada$imp_lo[1])` a
+`r myNum(tabla_combinada$imp_hi[1])` víctimas de desaparición forzada en el
+`r myNum(tabla_combinada$yy_hecho[1])` con un promedio de `r myNum(tabla_combinada$imp_mean[1])`.
+
+Es decir, esto implica que este promedio es la mejor estimación puntual 
+respecto al número de víctimas de dicho año; no obstante, hay que tener en cuenta
+que siempre existe la incertidumbre de la imputación y que dicho fenómeno 
+estará representado por el intervalo de confianza del 95%.
+
+Procedemos a estimar el subregistro de víctimas.
+
+## Proceso estratificación para estimaciones {-}
+
+Con el fin de controlar la heterogeneidad  en las probabilidades de captura 
+(ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se 
+estratifica la información de acuerdo al análisis a realizar. En este caso, 
+como queremos estimar el subregistro de desaparición por año, se estratifica 
+por año del hecho. Para empezar, es necesario filtrar por las variables de 
+"pertenece al conflicto", `is_conflict` y  la variable de "es desaparición forzada", `is_forced_dis`.
+
+```{r estratificacion, echo = TRUE}
+
+replicas_estratos <- replicas_filtradas %>% 
+  dplyr::mutate(is_conflict = as.integer(is_conflict)) %>% 
+  dplyr::filter(is_conflict == 1) %>% 
+  dplyr::filter(is_forced_dis == 1)
+
+paged_table(replicas_estratos, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+Seguido de esto se estratifica. Es importante que usted como usuario 
+vea que este proceso es netamente artesanal, es decir, usted puede usar su propio
+código o funciones para realizar este proceso que, en nuestro caso, será a través
+de una función previamente creada (fuera del paquete `verdata`) para facilitar 
+este ejercicio:
+
+```{r estratificacion-funcion, echo = TRUE}
+
+stratify <- function(replicate_data, schema) {
+    
+    schema_list <- unlist(str_split(schema, pattern = ","))
+    
+    grouped_data <- replicate_data %>%
+        group_by(!!!syms(schema_list))
+    
+    stratification_vars <- grouped_data %>%
+        group_keys() %>%
+        group_by_all() %>%
+        group_split()
+    
+    split_data <- grouped_data %>%
+        group_split(.keep = FALSE)
+    
+    return(list(strata_data = split_data,
+                stratification_vars = stratification_vars))
+
+}
+
+```
+
+Entonces, en primera instancia creamos una función que necesita de dos 
+argumentos:
+
+-  El argumento **replicate_data** se refiere a un data frame a estratificar,
+que en nuestro caso es **replicas_estratos**, es decir, la información filtrada 
+por `is_conflict` == 1 e `is_foced_dis` == 1. 
+
+- El segundo argumento son las variables de estratificación (**schema**). 
+Recordemos que la estratificación es un instrumento para aislar la heterogeneidad, 
+entonces estas son variables que pensamos pueden afectar la probabilidad de 
+registro de las víctimas y, por lo tanto, queremos agrupar las víctimas con 
+características similares.Todas estas variables deben encontrarse en el objeto 
+**replicas_estratos**.
+
+En términos generales, lo que hace esta función es: primero agrupa por las
+variables de estratificación y guarda en una lista llamada **strata_data** esta 
+información. En ese sentido, cada elemento de la lista es una tabla con las
+víctimas que hacen parte de ese estrato. En segundo lugar, se define el 
+nombre de cada estrato, para poder identificarlos cuando estimemos. 
+Para esto se retorna una lista llamada **stratification_vars** que 
+contiene las combinaciones de las variables, es decir, el nombre del estrato. 
+
+A continuación se aplica la función:
+
+```{r stratify-continuacion, echo = TRUE}
+
+schema <- ("replica,yy_hecho")
+
+listas <- stratify(replicas_estratos, schema)
+
+```
+
+El paso anterior muestra la forma en la que aplicamos la función. Considerando 
+queen este ejemplo queremos estimar el número de víctimas de desaparición por 
+año, la estratificación se hace por la variable **yy_hecho** para cada réplica. 
+El objeto **schema** contiene una cadena de caracteres con los nombres de las 
+variables en el data frame. Luego, como se mencionó, usamos la tabla 
+**replicas_estratos** como primer argumento y el objeto **schema** como segundo. 
+Lo que obtenemos es lo siguiente:
+
+El objeto **listas** contiene dos listas. La primera, llamada **strata_data** data
+contiene las víctimas que fueron víctimas de desaparición en cada uno de los años
+para cada una de las réplicas. Por ejemplo, el elemento 151 de la lista contiene 
+las víctimas de desaparición en 2007 presentes en la réplica 4:
+
+```{r stratify-continuacion2, echo = TRUE}
+
+datos <- listas[["strata_data"]]
+
+replica4_2007 <- datos[[151]]
+
+paged_table(replica4_2007, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+La segunda lista, llamada **stratification_vars**, contiene el nombre de cada 
+estrato. Siguiendo el mismo ejemplo, el elemento 151 de **stratification_vars** 
+contiene una columna con la réplica (R4) y una columna con el año (2007). 
+Nuevamente, este solo es un ejemplo de nuestra forma de estratificar, usted puede 
+hacerlo de otra manera. La idea principal es agrupar las víctimas por las 
+variables del estrato y las réplicas que esté usando.
+
+```{r stratify-continuacion3, echo = TRUE}
+
+nombres <- listas[["stratification_vars"]]
+
+replica4_2007_nombre <- nombres[[151]]
+
+paged_table(replica4_2007_nombre, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+## Estimación víctimas por año del hecho {-}
+
+Ahora, definidos los estratos, se calculan las estimaciones para 
+esta violación en particular; para este paso se usa la función `mse` del paquete 
+`verdata`. Esta función permite preparar los datos, revisar si hay estimaciones 
+precalculadas para ese estrato y estimar, en caso de que no las haya. Como se indicó al principio, esta función tomará como insumo la información de las fuentes, es decir, 
+aquellas columnas que comienzan por `in_`. También filtra por fuentes válidas, es decir, 
+las fuentes que cuentan con al menos una víctima en ese estrato. 
+Para que un estrato sea estimable, se requiere un mínimo de 3 fuentes válidas. Si 
+un estrato no es estimable la función arrojará `NA`. 
+
+Como se mencionó, considerando que el proceso de estimación toma tiempo y recursos computacionales, esta función le permite usar estimaciones ya calculadas en el 
+proyecto. Para esto, usted debe descargar las estimaciones publicadas [acá](https://www.comisiondelaverdad.co/analitica-de-datos-informacion-y-recursos#c3).
+
+
+```{r mse-function, eval = FALSE}
+
+mse(
+  stratum_data,
+  stratum_name,
+  estimates_dir = NULL,
+  min_n = 1,
+  K = NULL,
+  buffer_size = 10000,
+  sampler_thinning = 1000,
+  seed = 19481210,
+  burnin = 10000,
+  n_samples = 10000,
+  posterior_thinning = 500
+)
+
+```
+
+Algunos de los argumentos de esta función se explican de la siguiente 
+forma^[Puede obtener más información de la función de `mse` escribiendo en la 
+consola de R: ?mse.]
+
+- `stratum_data`: Data frame que incluye la información del estrato de interés 
+(data frames que creamos antes).
+
+- `stratum_name`: Es el nombre del estrato.
+
+- `estimates_dir`: Es la ruta (opcional) o el *path* de la carpeta o archivo 
+que contiene las estimaciones precalculadas. Esto le permite a la función buscar 
+entre las estimacines si el estrato que usted quiere analizar ya fue estimado. 
+
+```{r estimaciones-files, echo = TRUE}
+
+estimaciones_dir <- here::here("estimaciones")
+
+```
+
+Al final el resultado será un data frame con cinco columnas: una columna 
+que indica si el estrato es válido o no (`TRUE` o `FALSE`); el número de muestras
+`N` de la distribución posterior (`NA` si el estrato no es válido); las fuentes
+válidas que se usaron en la estimación `valid_sources`; el número de observaciones
+de las listas que son válidas del estrato (`n_obs`) y el nombre del estrato 
+`stratum_name`. Si un estrato es estimable, este dataframe va a contener 1000
+muestras para cada estrato. Esto lo ilustramos a continuación.
+
+```{r estimaciones, eval=FALSE}
+
+estimacion <- purrr::map2_dfr(.x = listas$strata_data,
+                              .y = listas$stratification_vars,
+                              .f = mse,
+                              estimates_dir = estimaciones_dir)
+
+estimacion <- estimacion %>% 
+  mutate(replica = stratum_name$replica,
+         statum_name = paste(stratum_name$yy_hecho,sep = "-")) %>% 
+  select(-starts_with("stratum_name"))
+
+paged_table(estimacion, options = list(rows.print = 10, cols.print = 8))
+
+```
+
+```{r open-estimates, echo = TRUE}
+
+estimacion <- arrow::read_parquet(here::here("CO-examples/Resultados-CEV/Estimacion/output-estimacion/yy_hecho.parquet"))
+
+estimacion <- estimacion %>%
+    mutate(stratum_name = paste(pull(stratum_name, 1),
+                                sep = "-"))
+
+paged_table(union_mse, options = list(rows.print = 10, cols.print = 8))
+
+```
+
+```{r combinacion-transformacion, echo = TRUE}
+
+tabla_final <- estimacion %>%
+    rename(replicate = replica) %>% 
+    select(-validated, -valid_sources)
+
+paged_table(tabla_final, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+```{r combinacion-final, echo = TRUE}
+
+final_agrupacion <- tabla_final %>%
+    group_by(stratum_name)
+
+estimates_tabla <- final_agrupacion %>%
+    group_split() %>%
+    map_dfr(.f = combine_estimates) %>%
+    bind_cols(group_keys(final_agrupacion)) %>% 
+    select(stratum_name, N_025, N_mean, N_975) %>% 
+    rename(yy_hecho = stratum_name)
+
+paged_table(estimates_tabla, options = list(rows.print = 10, cols.print = 5))
+
+
+```
+
+Vemos que, después de agrupar, tenemos los resultados derivados de 
+`estimates_tabla` cuyo código permite separar nuestras categorías (o o años),
+luego utilizamos la función de `map_dfr` en el que podemos aplicar 
+`combine_estimates` a cada una de nuestras categorías. Por último 
+con la función `bind_cols` unimos estos resultados con las variables de agrupación, 
+es decir, con `yy_hecho` que la denominamos `stratum_name`. 
+
+En tal sentido, el proyecto JEP-CEV-HRDAG estimó que para el año 2002 el 
+número de víctimas desaparecidas de forma forzada estuvo entre 
+`r myNum(tabla_final$N_025[18])` y `r myNum(estimates_tabla$N_975[18])` con
+una probabilidad del 95% (intervalo de credibilidad). En otras palabras, 
+hay una alta probabilidad (95% de credibilidad) de que el número de de victimas
+en este año se encuentre dentro de este rango, mostrando a su vez el valor más
+probable de `r myNum(estimates_tabla$N_mean[18])` victimas.
+
+Por último se une esta base con los resultados combinados, se corta la 
+la varianza de la estimación, para evitar que una varianza muy grande dificulte la visualziación en la gráfica y se grafican los resultados:
+
+```{r union, echo = TRUE}
+
+estimates_final <- estimates_tabla %>% 
+    mutate(yy_hecho = as.character(yy_hecho))
+
+tabla_final <- dplyr::left_join(estimates_tabla, tabla_combinada)
+    
+paged_table(tabla_final, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+```{r corte, echo = TRUE}
+
+n_warn <- 19000
+
+combine_estimates_year <- tabla_final %>%
+    mutate(max_var = case_when(
+      (N_975 > n_warn) ~ n_warn,
+      TRUE ~ NA_real_)) %>%
+    mutate(N_975 = ifelse(!is.na(max_var), max_var, N_975))
+
+```
+
+```{r graph-estimates, echo = TRUE, warning=FALSE}
+
+combine_estimates_year <- combine_estimates_year %>% 
+    arrange(desc(N_mean)) %>% 
+    mutate(yy_hecho = as.numeric(yy_hecho))
+
+mr_observed_ttl <- glue("Observado")
+mr_replicates_ttl <- glue("Imputado")
+mr_universo_ttl <- glue("Estimado")
+
+g <- combine_estimates_year %>%
+  ggplot(aes(x = yy_hecho)) +
+  geom_line(aes(y = observed,
+                fill = mr_observed_ttl), color = "black", size = 1) +
+  geom_line(aes(y = imp_mean,  fill = mr_replicates_ttl),color = "#1F74B1", 
+            show.legend = FALSE, size = 1) +
+  geom_ribbon(aes(ymin = N_025, ymax = N_975, fill = mr_universo_ttl),
+              alpha = 0.5) +
+  geom_point(aes(y = max_var), pch = 21, color = 'darkgreen', fill = "green",
+             size = 1, stroke = 2) +
+  theme_minimal() +
+  xlab("") +
+  ylab("Número de víctimas") +
+  theme(axis.text.x = element_text(size = 11, angle = 90),
+        axis.title.y = element_text(size = 11),
+        axis.ticks.x = element_line(size = 0.1)) +
+  scale_x_continuous(breaks = seq(1985, 2020, 5)) +
+  theme(legend.position = "bottom") +
+  scale_fill_manual(values = c("darkgreen", "#1F74B1", "black" ), name = "")
+
+print(g)
+
+
+```

@@ -1,0 +1,378 @@
+---
+title: "Proceso estimación del subregistro"
+subtitle: "Reclutamientos a menores de edad desagregado por año del hecho: 1990–2017"
+output:
+  rmdformats::robobook:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+    gallery: true
+    use_bookdown: true
+    highlight: kate
+    embed_fonts: false
+---
+
+```{r setup, echo = TRUE,include = FALSE}
+
+pacman::p_load(ggplot2, dplyr, rmarkdown, verdata, LCMCR, here,
+               arrow, dplyr, rlang, purrr, glue, tidyr, stringr, 
+               gridExtra)
+
+options(warn = -1)
+```
+
+```{r numbers, include = FALSE}
+
+myNum <- function(n) {
+  return(prettyNum(n, big.mark = " "))
+}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+```
+
+```{r library, include=TRUE}
+
+library(verdata)
+
+```
+
+## Introducción {-}
+
+Si es su primera vez trabajando con los datos, no está muy familiarizado con el 
+paquete o simplemente quiere conocer más sobre el proyecto y el objetivo de 
+estos ejemplos y el paquete `verdata`, consulte:
+https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducción.html 
+antes de continuar. 
+
+En este ejemplo se ilustrará el proceso de estimación del total de víctimas
+por año del hecho (1990–2017).
+
+## Importando resultados estratificación {-}
+
+En este [ejemplo](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/output/reclutamiento-anio-estratificacion.html)
+se evidenció el proceso para la estratificación en la que agrupamos víctimas con
+características similares. Teniendo este insumo procedimos a guardar los 
+resultados en nuestra maquina local o computador. En este ejemplo retomaremos 
+dicho input para continuar con el siguiente paso que es -precisamente- 
+la estimación:
+
+```{r open-estratify, echo = TRUE}
+
+results <- readRDS(here::here("Resultados-CEV/output-estratificacion/reclutamiento-yy_hecho-edad_c.rds"))
+
+```
+
+## Estimación víctimas por año del hecho {-}
+
+Ahora, definidos los estratos, se calculan las estimaciones para 
+esta violación en particular; para este paso se usa la función `mse` del paquete 
+`verdata`. Esta función permite preparar los datos, revisar si hay estimaciones
+precalculadas para ese estrato y estimar, en caso de que no las haya. 
+Esta función tomará como insumo la información de las fuentes, es decir, 
+aquellas columnas que comienzan por `in_`. Para que un estrato sea estimable, 
+se requiere un mínimo de 3 fuentes válidas. Si un estrato no es estimable la 
+función arrojará `NA`. 
+
+Como se mencionó, considerando que el proceso de estimación toma tiempo y 
+recursos computacionales, esta función le permite usar estimaciones ya calculadas 
+en el proyecto. Para esto, usted debe descargar las estimaciones publicadas [acá](https://www.comisiondelaverdad.co/analitica-de-datos-informacion-y-recursos#c3).
+
+```{r mse-function, eval = FALSE}
+
+mse(
+  stratum_data,
+  stratum_name,
+  estimates_dir = NULL,
+  min_n = 1,
+  K = NULL,
+  buffer_size = 10000,
+  sampler_thinning = 1000,
+  seed = 19481210,
+  burnin = 10000,
+  n_samples = 10000,
+  posterior_thinning = 500
+)
+
+```
+
+Algunos de los argumentos de esta función se explican de la siguiente 
+forma^[Puede obtener más información de la función de `mse` escribiendo en la 
+consola de R: ?mse.]
+
+- `stratum_data`: Data frame que incluye la información del estrato de interés 
+(data frames que creamos antes).
+
+- `stratum_name`: Es el nombre del estrato.
+
+- `estimates_dir`: Es la ruta (opcional) o el *path* de la carpeta o archivo 
+que contiene las estimaciones precalculadas. Esto le permite a la función buscar
+entre las estimacines si el estrato que usted quiere analizar ya fue estimado. 
+
+```{r estimaciones-files, echo = TRUE}
+
+estimaciones_dir <- here::here("estimaciones")
+
+```
+
+Al final el resultado será un data frame con cinco columnas: una columna 
+que indica si el estrato es válido o no (`TRUE` o `FALSE`); el número de muestras
+`N` de la distribución posterior (`NA` si el estrato no es válido); las fuentes
+válidas que se usaron en la estimación `valid_sources`; el número de observaciones
+de las listas que son válidas del estrato (`n_obs`) y el nombre del estrato 
+`stratum_name`. Si un estrato es estimable, este data frame va a contener 1000
+muestras para cada estrato.
+
+Antes de esto es importante aclarar que este proceso se hará a través de una 
+iteración (repetir el proceso), ya que este proceso se aplicará a cada una de 
+nuestras réplicas. Es decir: 
+
+En primera instancia guardaremos nuestros resultados por réplica en un objeto 
+llamado `estimates`. Posteriormente procederemos a usar nuestra iteración en 
+cada réplica, siendo `réplicas` el objeto definido como `replicas <- paste0("R", 1:10)`.
+Ahora, `map2_dfr` nos será bastante útil ya que permite aplicar nuestra 
+función de `mse` a cada combinación de nuestras estratificaciones. Es decir, 
+esta función permite calcular la función de `mse` a cada una de nuestras 
+combinaciones de datos:  `strata_data` y las variables de estratificación 
+`stratification_vars`. Por último agregaremos la columna de `replica` para 
+ubicar de qué versión o réplica de los datos viene nuestra información y 
+con `do.call` pegaremos nuestras bases, es decir, las réplicas. 
+Esto lo veremos a continuación: 
+
+```{r estimaciones, echo = TRUE}
+
+estimates <- list() 
+
+replicas <- paste0("R", 1:10)
+
+for (replica in replicas) {
+    
+    strata_data <- results[[replica]]$strata_data
+    stratification_vars <- results[[replica]]$stratification_vars
+    
+    estimate_mse <- purrr::map2_dfr(.x = strata_data,
+                                    .y = stratification_vars,
+                                    .f = ~ {
+                                      mse <- verdata::mse(stratum_data = .x,
+                                                          stratum_name = .y,
+                                                          estimates_dir = estimaciones_dir)
+                               mse$replica <- replica
+                               mse
+                           })
+    
+    estimates[[replica]] <- estimate_mse
+}
+
+union_mse <- do.call(rbind, estimates)
+
+union_mse <- union_mse %>%
+    mutate(stratum_name = paste(pull(stratum_name, 1),
+                                pull(stratum_name, 2),
+                                sep = "-"))
+
+paged_table(union_mse, options = list(rows.print = 10, cols.print = 8))
+
+```
+
+Estos son los resultados de `mse`. Vemos las cinco (5) primeras columnas 
+mencionadas en el que cabe destacar que todos los estratos son válidos, es decir, 
+no vemos ningún _NA_ en nuestra tabla; lo que indica que en cada estrato 
+hay al menos 3 listas con al menos 1 víctima. Además, vemos nuestro *N* el 
+cual evidencia 1000 muestras aleatorias de la distribución posterior de la 
+cantidad de víctimas probables para cada estrato y réplica.
+
+## Combinación de las estimaciones {-}
+
+Ahora, ya que tenemos esta información, nuestro último paso en el trabajo de 
+estimación para víctimas -desagregadas por año del hecho- es combinar nuestras 
+estimaciones. Esto lo haremos a través de nuestra función `combine_estimates`
+el cual permite obtener los intervalos creibles (no de confianza). Pero antes,
+debemos realizar una pequeña transformación a nuestra anterior tabla `union_mse`,
+esto con el fin de obtener nuestros resultados desagregados esta característica 
+(y proceder luego a combinar). Esto lo presentaremos a continuación:
+
+```{r combinacion-transformacion, echo = TRUE}
+
+tabla_sampler <- union_mse %>%
+    separate(stratum_name, into = c("yy_hecho", "edad_c"), 
+             sep = "-", remove = FALSE, extra = "merge") %>% 
+    rename(replicate = replica) %>% 
+    group_by(stratum_name, replicate) %>% 
+    mutate(sample_number = glue("sample_{row_number()}")) %>% 
+    pivot_wider(id_cols = c("replicate", "stratum_name", "yy_hecho", "n_obs"),
+                values_from = N,
+                names_from = sample_number) 
+
+paged_table(tabla_sampler, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+En primera instancia vemos que la función `separate` del paquete `tidyr` nos 
+separa la columna de `stratum_name` en las variables originales de perpetrador
+y año del hecho, luego agrupamos por nuestra columna `stratum_name` y 
+cada una de nuestras 10 réplicas. 
+
+Adicionalmente generamos una columna denominada `sample_number` en el que 
+*{row_number()}* corresponde a cada fila de *N*. Es decir, articulando esto con 
+nuestra siguiente línea de código, vemos que `pivot_wider` convierte nuestro 
+dataframe de un formato largo a ancho, o, en otras palabras, los valores que
+están en *N* se "trasladan" a las columnas que comienzan por *sample_*. Como
+habíamos explicado anteriormente, cada estrato para la réplica (R1) contiene 1000 
+muestras aleatorias de la distribución posterior, por lo que cada valor de este
+*N* se expanderá a cada columna de `sample_` y por tanto, esas serán 1000 columnas,
+desde `sample_1` hasta `sample_1000`.
+
+Teniendo esta transformación, procederemos a agrupar por nuestra variable de 
+interés (año del hecho) y réplica, seguido de la suma de estas muestras de la
+distribución posterior de cada estrato que forma parte de este agrupamiento. 
+
+```{r combinacion-transformacion2, echo = TRUE}
+
+tabla_agrupacion <- tabla_sampler %>% 
+    group_by(yy_hecho, replicate) %>% 
+    summarize(across(c(starts_with("sample_"), "n_obs"), sum)) 
+
+paged_table(tabla_agrupacion, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+En otras palabras, primero agrupamos por departamento del hecho y réplica, 
+es decir -por ejemplo- agrupar por el año de 1990 y la réplica 1, 1990 y 
+réplica 10, y así sucesivamente. Cuando tengamos este tipo de agrupación (como 
+lo vemos en la *tabla_agrupacion*) tomaremos -por ejemplo- la réplica 1 ("R1") 
+y la categoría o año de 1990 y sumaremos los valores para el `sample_` (es como
+tomar: `ejemplo <- tabla_sampler %>% filter(replicate == "R1", yy_hecho == "1990")` 
+y sumar: `sum(ejemplo$sample_1)`, dándonos lo que nos está arrojando la primera 
+fila de la columna `sample_1`, es decir, `r myNum(tabla_agrupacion$sample_1[1])`).
+
+Sumado a esto, volveremos a transformar nuestros datos de ancho a largo, es 
+decir, volveremos a una estructura muy parecida a *tabla_sampler*, pero esta
+vez nuestro *N* muestra la suma de las muestras de la distribución posterior 
+por año del hecho y réplica que hicimos en el paso anterior:
+
+```{r combinacion-transformacion3, echo = TRUE}
+
+tiempo_agrupacion <- tabla_agrupacion %>%
+    group_by(yy_hecho) %>%
+    pivot_longer(starts_with("sample_"), 
+                 names_to = "replicate_num",
+                 values_to = "N") %>%
+    ungroup() %>%
+    select(-replicate_num) %>%
+    rename(stratum_name = yy_hecho) 
+
+paged_table(tiempo_agrupacion, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+Para finalizar, vemos que esta información está desagregada por año del
+hecho y réplica, pero, como sabemos, deseamos ver los resultados únicamente por 
+año del hecho. Por tal razón agruparemos esta información por dicha variable 
+(que ahora se denomina `stratum_name`): 
+
+```{r combinacion-final, echo = TRUE}
+
+final_agrupacion <- tiempo_agrupacion %>%
+    group_by(stratum_name)
+
+estimates_tabla <- final_agrupacion %>%
+    group_split() %>%
+    map_dfr(.f = combine_estimates) %>%
+    bind_cols(group_keys(final_agrupacion)) %>% 
+    select(stratum_name, N_025, N_mean, N_975) %>% 
+    rename(yy_hecho = stratum_name)
+
+paged_table(estimates_tabla, options = list(rows.print = 10, cols.print = 5))
+
+
+```
+Vemos pues que, después de agrupar, tenemos los resultados derivados de 
+`estimates_tabla` cuyo código permite separar nuestras categorías (o o años),
+luego utilizamos la función de `map_dfr` en el que podemos aplicar `combine_estimates`
+a cada una de nuestras categorías. Por último -con `bind_cols`- unimos estos 
+resultados con las variables de agrupación, es decir, con `yy_hecho` que la 
+denominamos `stratum_name`. 
+
+Seguido de esto importaremos nuestros resultados a nivel documentado e imputado:
+
+```{r datos-doc-imp, echo = TRUE}
+
+tabla_doc_imp <- arrow::read_parquet(here::here("Resultados-CEV/output-imputados/reclutamiento-anio-imputados.parquet"))
+
+paged_table(tabla_doc_imp, options = list(rows.print = 10, cols.print = 5))
+
+```
+Por último uniremos esta base con nuestros resultados combinados y graficaremos 
+nuestros resultados:
+
+```{r union, echo = TRUE}
+
+estimates_final <- estimates_tabla %>% 
+    mutate(yy_hecho = as.character(yy_hecho))
+
+tabla_final <- dplyr::left_join(estimates_tabla, tabla_doc_imp)
+
+tabla_final <- tabla_final %>% 
+    arrange(desc(N_mean))
+    
+paged_table(tabla_final, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+
+```{r corte, echo = TRUE}
+
+n_warn <- 2000
+
+combine_estimates_year <- tabla_final %>%
+    mutate(max_var = case_when(
+      (N_975 > n_warn) ~ n_warn,
+      TRUE ~ NA_real_)) %>%
+    mutate(N_975 = ifelse(!is.na(max_var), max_var, N_975))
+
+```
+
+```{r graph-estimates, echo = TRUE, warning=FALSE}
+
+combine_estimates_year <- combine_estimates_year %>% 
+    arrange(desc(N_mean)) %>% 
+    mutate(yy_hecho = as.numeric(yy_hecho))
+
+mr_observed_ttl <- glue("Observado")
+mr_replicates_ttl <- glue("Imputado")
+mr_universo_ttl <- glue("Estimado")
+
+g <- combine_estimates_year %>%
+  ggplot(aes(x = yy_hecho)) +
+  geom_line(aes(y = observed,
+                fill = mr_observed_ttl), color = "black", size = 1) +
+  geom_line(aes(y = imp_mean,  fill = mr_replicates_ttl),color = "#1F74B1", 
+            show.legend = FALSE, size = 1) +
+  geom_ribbon(aes(ymin = N_025, ymax = N_975, fill = mr_universo_ttl),
+              alpha = 0.5) +
+  geom_point(aes(y = max_var), pch = 21, color = 'darkgreen', fill = "green",
+             size = 1, stroke = 2) +
+  theme_minimal() +
+  xlab("") +
+  ylab("Número de víctimas") +
+  theme(axis.text.x = element_text(size = 11, angle = 90),
+        axis.title.y = element_text(size = 11),
+        axis.ticks.x = element_line(size = 0.1)) +
+  scale_x_continuous(breaks = seq(1985, 2020, 5)) +
+  theme(legend.position = "bottom") +
+  scale_fill_manual(values = c("darkgreen", "#1F74B1", "black" ), name = "")
+
+print(g)
+
+
+```
+
+El proyecto JEP-CEV-HRDAG estimó que para el año `r myNum(tabla_final$yy_hecho[11])` el 
+número de víctimas estuvo entre `r myNum(tabla_final$N_025[1])` y 
+`r myNum(tabla_final$N_975[1])` con una probabilidad del 95% (intervalo de
+credibilidad). En otras palabras, hay una alta probabilidad (95% de credibilidad) 
+de que el número de de victimas en este año se encuentre dentro de este rango, 
+mostrando a su vez el valor más probable de `r myNum(tabla_final$N_mean[1])` 
+victimas. Adicionalmente se puede evidenciar que la varianza es tan alta que 
+no se presenta en la gráfica. 
