@@ -1,6 +1,6 @@
 ---
 title: "Proceso de cálculo de víctimas documentadas"
-subtitle: "Desapariciones desagregado por sexo - 1985–2016"
+subtitle: "Desapariciones forzadas desagregadas por sexo - 1985–2016"
 output:
   rmdformats::robobook:
     code_folding: show

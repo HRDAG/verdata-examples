@@ -47,7 +47,7 @@ estos ejemplos y el paquete `verdata`, consulte:
 https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducción.html 
 antes de continuar. 
 
-En este ejemplo, se ilustrará el proceso para obtener los datos documentados de 
+En este ejemplo, se ilustrará el proceso para obtener los datos imputados de 
 la presente violación. Específicamente, se replicará la tabla 3 de la página 
 11 del [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag).
 
@@ -138,6 +138,7 @@ tabla_documentada <- arrow::read_parquet(here::here("Resultados-CEV/Documentados
 paged_table(tabla_documentada, options = list(rows.print = 10, cols.print = 5))
 
 ```
+## Víctimas imputadas {-}
 
 Posterior a esto se aplica la función de `combine_replicates` que,
 como su nombre lo indica, permite combinar las réplicas para obtener lo que 

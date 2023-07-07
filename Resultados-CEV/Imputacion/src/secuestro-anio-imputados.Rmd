@@ -1,6 +1,6 @@
 ---
 title: "Proceso de cálculo de víctimas imputadas"
-subtitle: "Secuestros desagregado por año del hecho - 1990–2018"
+subtitle: "Secuestros desagregados por año del hecho - 1990–2018"
 output:
   rmdformats::robobook:
     code_folding: show
@@ -141,6 +141,7 @@ tabla_documentada <-  arrow::read_parquet(here::here("Resultados-CEV/Documentado
 paged_table(tabla_documentada, options = list(rows.print = 10, cols.print = 5))
 
 ```
+## Víctimas imputadas {-}
 
 Posterior a esto se aplica la función de `combine_replicates` que,
 como su nombre lo indica, permite combinar las réplicas para obtener lo que 
@@ -185,9 +186,6 @@ paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
 ```
 
 ```{r graph-replicates, echo = TRUE}
-
-tabla_combinada <- tabla_combinada %>% 
-     arrange(desc(imp_mean))
 
 g <- tabla_combinada %>%
     mutate(yy_hecho = as.numeric(yy_hecho)) %>% 

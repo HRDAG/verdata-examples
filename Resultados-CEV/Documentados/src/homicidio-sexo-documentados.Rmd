@@ -1,6 +1,6 @@
 ---
 title: "Proceso de cálculo de víctimas documentadas"
-subtitle: "Homicidio desagregado por sexo - 1985–2018"
+subtitle: "Homicidios desagregados por sexo - 1985–2018"
 output:
   rmdformats::robobook:
     code_folding: show

@@ -47,7 +47,7 @@ estos ejemplos y el paquete `verdata`, consulte:
 https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducción.html 
 antes de continuar. 
 
-En este ejemplo, se ilustrará el proceso para obtener los datos documentados de 
+En este ejemplo, se ilustrará el proceso para obtener los datos imputados de 
 la presente violación. Específicamente, se replicará la tabla 4 de la página 
 11 del [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag).
 
@@ -139,6 +139,8 @@ paged_table(tabla_documentada, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
+## Víctimas imputadas {-}
+
 Posterior a esto se aplica la función de `combine_replicates` que,
 como su nombre lo indica, permite combinar las réplicas para obtener lo que 
 denominamos "la media de la estimación puntual" junto con el intervalo de 
@@ -192,9 +194,9 @@ que estas nuevas columnas incluyen todas las víctimas, independientemente si
 pasaron por un proceso de imputación o no.
 
 Así, después del proceso de imputación estadística y con un con un nivel de 
-confianza del 95% se evidencia que hubo entre `r myNum(tabla_combinada$imp_lo[2])` a
-`r myNum(tabla_combinada$imp_hi[2])` víctimas vinculadas a este fenómeno,
-con un promedio de `r myNum(tabla_combinada$imp_mean[2])`. Es decir, esto implica
+confianza del 95% se evidencia que hubo entre `r myNum(tabla_combinada$imp_lo[1])` a
+`r myNum(tabla_combinada$imp_hi[1])` víctimas vinculadas a este fenómeno,
+con un promedio de `r myNum(tabla_combinada$imp_mean[1])`. Es decir, esto implica
 que este promedio es la mejor estimación puntual respecto al número de víctimas de 
 esta categoría, no obstante, hay que tener en cuenta que siempre tendremos la 
 incertidumbre de la imputación y que dicho fenómeno estará representado por el

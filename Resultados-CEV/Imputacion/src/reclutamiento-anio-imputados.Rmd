@@ -1,6 +1,6 @@
 ---
 title: "Proceso de cálculo de víctimas imputadas"
-subtitle: "Reclutamiento de niños, niñas y adolescentes desagregado por año del hecho: 1990-2017"
+subtitle: "Reclutamiento de menores de edad desagregado por año del hecho: 1990-2017"
 output:
   rmdformats::robobook:
     code_folding: show
@@ -139,6 +139,8 @@ tabla_documentada <-  arrow::read_parquet(here::here("Resultados-CEV/Documentado
 paged_table(tabla_documentada, options = list(rows.print = 10, cols.print = 5))
 
 ```
+
+## Víctimas imputadas {-}
 
 Posterior a esto se aplica la función de `combine_replicates` que,
 como su nombre lo indica, permite combinar las réplicas para obtener lo que 

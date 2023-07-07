@@ -1,6 +1,6 @@
 ---
 title: "Proceso de cálculo de víctimas documentadas"
-subtitle: "Reclutamiento de niños, niñas y adolescentes desagregado por año del hecho: 1990-2017"
+subtitle: "Reclutamiento de niños, niñas y adolescentes desagregados por año del hecho: 1990-2017"
 output:
   rmdformats::robobook:
     code_folding: show
