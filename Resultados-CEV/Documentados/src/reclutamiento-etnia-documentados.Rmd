@@ -74,7 +74,7 @@ el error _"This file is not identical to the one published. This means the resul
 ```{r confirm-replicates, eval=FALSE}
 
 verdata::confirm_files(here::here("verdata-parquet/reclutamiento"), 
-                                  "reclutamiento", 45, 55)
+                                  "reclutamiento", 1, 10)
 
 ```
 
@@ -91,7 +91,7 @@ razón, usted quiere leer los datos a pesar de saber que no son los mismos datos
 originamente publicados, puede cambiar el argumento `crash` a FALSE, y, 
 en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia. 
 
-En este ejemplo trabajaremos las réplicas 45 a la 55. Usted puede trabajar con 
+En este ejemplo trabajaremos las réplicas 1 a la 10. Usted puede trabajar con 
 las réplicas que desee de acuerdo con los análisis que desee realizar.
 Además, como se ha mencionado, esta información documentada se refiere a las 
 víctimas que fueron registradas originalmente en las bases (y en el que algunos 
@@ -104,14 +104,14 @@ en la Comisión de la Verdad.
 ```{r open-replicates, echo = TRUE}
 
 replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/reclutamiento"),
-                                           "reclutamiento", 45, 55)
+                                           "reclutamiento", 1, 10)
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
 Vemos que tenemos `r myNum(nrow(replicas_datos))` registros, nuestras réplicas 
-van desde la número 45 hasta la 55. Además, nuestros datos tienen información 
+van desde la número 1 hasta la 10. Además, nuestros datos tienen información 
 sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
 el año del hecho, la pertenencia étnica, entre otros. Sin embargo, para 
 centrarnos en un análisis más específico, tal como el realizado

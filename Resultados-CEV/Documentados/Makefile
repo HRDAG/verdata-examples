@@ -40,48 +40,6 @@ all: \
 clean:
 	rm output/*
 
-output/homicidio-anio-documentados.html: \
-		src/homicidio-anio-documentados.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-anio-documentados.html output/
-
-output/homicidio-sexo-documentados.html: \
-		src/homicidio-sexo-documentados.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-sexo-documentados.html output/
-
-output/homicidio-is_conflict-documentados.html: \
-		src/homicidio-is_conflict-documentados.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-is_conflict-documentados.html output/
-
-output/homicidio-perpetrador-documentados.html: \
-		src/homicidio-perpetrador-documentados.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-perpetrador-documentados.html output/
-
-output/homicidio-departamento-documentados.html: \
-		src/homicidio-departamento-documentados.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-departamento-documentados.html output/
-
-output/homicidio-etnia-documentados.html: \
-		src/homicidio-etnia-documentados.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-etnia-documentados.html output/
-
-output/homicidio-macroregion_cev-documentados.html: \
-		src/homicidio-macroregion_cev-documentados.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-macroregion_cev-documentados.html output/
-
 output/reclutamiento-anio-documentados.html: \
 		src/reclutamiento-anio-documentados.Rmd
 	-mkdir output
@@ -195,5 +153,48 @@ output/desaparicion-macroregion_cev-documentados.html: \
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
 		mv src/desaparicion-macroregion_cev-documentados.html output/
+
+output/homicidio-anio-documentados.html: \
+		src/homicidio-anio-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/homicidio-anio-documentados.html output/
+
+output/homicidio-sexo-documentados.html: \
+		src/homicidio-sexo-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/homicidio-sexo-documentados.html output/
+
+output/homicidio-is_conflict-documentados.html: \
+		src/homicidio-is_conflict-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/homicidio-is_conflict-documentados.html output/
+
+output/homicidio-perpetrador-documentados.html: \
+		src/homicidio-perpetrador-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/homicidio-perpetrador-documentados.html output/
+
+output/homicidio-departamento-documentados.html: \
+		src/homicidio-departamento-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/homicidio-departamento-documentados.html output/
+
+output/homicidio-etnia-documentados.html: \
+		src/homicidio-etnia-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/homicidio-etnia-documentados.html output/
+
+output/homicidio-macroregion_cev-documentados.html: \
+		src/homicidio-macroregion_cev-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/homicidio-macroregion_cev-documentados.html output/
+
 
 # Done

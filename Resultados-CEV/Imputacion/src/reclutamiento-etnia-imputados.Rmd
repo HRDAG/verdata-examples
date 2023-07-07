@@ -170,6 +170,7 @@ resultados (que por defecto es 2).
 
 ```{r combine-replicates, echo = TRUE}
 
+print(replicas_filtradas$etnia2)
 tabla_combinada <- verdata::combine_replicates("reclutamiento",
                                                 tabla_documentada,
                                                 replicas_filtradas, 
@@ -179,8 +180,10 @@ tabla_combinada <- verdata::combine_replicates("reclutamiento",
                                                 edad_minors_filter = TRUE,
                                                 include_props = TRUE)
 
+print("hola")
+
 tabla_combinada <- tabla_combinada %>% 
-  select(etnia, observed, obs_prop_na, obs_prop, imp_lo, imp_mean, imp_hi,
+  select("etnia2", observed, obs_prop_na, obs_prop, imp_lo, imp_mean, imp_hi,
          imp_lo_p, imp_mean_p, imp_hi_p )
 
 paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))

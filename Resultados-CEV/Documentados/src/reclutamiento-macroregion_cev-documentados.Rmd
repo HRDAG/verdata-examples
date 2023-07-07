@@ -56,7 +56,7 @@ se encuentra en la carpeta "recursos" a partir del paquete `readr`:
 
 ```{r macroregion, include=TRUE}
 
-macro_regiones <- readr::read_delim(here::here("recursos/macroregiones_cev.csv"), 
+macro_regiones <- readr::read_delim(here::here("Recursos/macroregiones_cev.csv"), 
                                     delim = "|", show_col_types = FALSE) %>%
   dplyr::mutate_all(as.character) %>% 
   dplyr::rename(muni_code_hecho = cod_mpio) %>%
