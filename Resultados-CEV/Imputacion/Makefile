@@ -11,133 +11,189 @@ HERE := $(shell git rev-parse --show-toplevel)
 .PHONY: clean all
 
 all: \
-	output/reclutamiento-anio-imputados.html	\
-	output/reclutamiento-is_conflict-imputados.html \
-	output/reclutamiento-perpetrador-imputados.html \
-	output/reclutamiento-departamento-imputados.html \
-	output/desaparicion-sexo-imputados.html \
-	output/desaparicion-is_conflict-imputados.html \
-	output/desaparicion-perpetrador-imputados.html \
-	output/desaparicion-departamento-imputados.html \
-	output/secuestro-anio-imputados.html	\
-	output/secuestro-sexo-imputados.html	\
-	output/secuestro-is_conflict-imputados.html \
-	output/secuestro-perpetrador-imputados.html \
-	output/secuestro-departamento-imputados.html \
-	output/homicidio-anio-imputados.html \
-	output/homicidio-sexo-imputados.html \
-	output/homicidio-is_conflict-imputados.html \
-	output/homicidio-departamento-imputados.html 
+	output/reclutamiento-anio-documentados.html	\
+	output/reclutamiento-is_conflict-documentados.html \
+	output/reclutamiento-perpetrador-documentados.html \
+	output/reclutamiento-departamento-documentados.html \
+	output/reclutamiento-etnia-documentados.html \
+	output/reclutamiento-macroregion_cev-documentados.html	\
+	output/desaparicion-sexo-documentados.html \
+	output/desaparicion-is_conflict-documentados.html \
+	output/desaparicion-perpetrador-documentados.html \
+	output/desaparicion-departamento-documentados.html \
+	output/desaparicion-etnia-documentados.html \
+	output/desaparicion-macroregion_cev-documentados.html	\
+	output/secuestro-anio-documentados.html	\
+	output/secuestro-sexo-documentados.html	\
+	output/secuestro-is_conflict-documentados.html \
+	output/secuestro-perpetrador-documentados.html \
+	output/secuestro-departamento-documentados.html \
+	output/secuestro-etnia-documentados.html \
+	output/secuestro-macroregion_cev-documentados.html	\
+	output/homicidio-anio-documentados.html \
+	output/homicidio-sexo-documentados.html \
+	output/homicidio-is_conflict-documentados.html \
+	output/homicidio-departamento-documentados.html \
+	output/homicidio-etnia-documentados.html	\
+	output/homicidio-macroregion_cev-documentados.html
 
 clean:
 	rm output/*
 
-output/homicidio-anio-imputados.html: \
-		src/homicidio-anio-imputados.Rmd
+output/homicidio-anio-documentados.html: \
+		src/homicidio-anio-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-anio-imputados.html output/
+		mv src/homicidio-anio-documentados.html output/
 
-output/homicidio-sexo-imputados.html: \
-		src/homicidio-sexo-imputados.Rmd
+output/homicidio-sexo-documentados.html: \
+		src/homicidio-sexo-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-sexo-imputados.html output/
+		mv src/homicidio-sexo-documentados.html output/
 
-output/homicidio-is_conflict-imputados.html: \
-		src/homicidio-is_conflict-imputados.Rmd
+output/homicidio-is_conflict-documentados.html: \
+		src/homicidio-is_conflict-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-is_conflict-imputados.html output/
+		mv src/homicidio-is_conflict-documentados.html output/
 
-output/homicidio-perpetrador-imputados.html: \
-		src/homicidio-perpetrador-imputados.Rmd
+output/homicidio-perpetrador-documentados.html: \
+		src/homicidio-perpetrador-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-perpetrador-imputados.html output/
+		mv src/homicidio-perpetrador-documentados.html output/
 
-output/homicidio-departamento-imputados.html: \
-		src/homicidio-departamento-imputados.Rmd
+output/homicidio-departamento-documentados.html: \
+		src/homicidio-departamento-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-departamento-imputados.html output/
+		mv src/homicidio-departamento-documentados.html output/
 
-output/reclutamiento-anio-imputados.html: \
-		src/reclutamiento-anio-imputados.Rmd
+output/homicidio-etnia-documentados.html: \
+		src/homicidio-etnia-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/reclutamiento-anio-imputados.html output/
+		mv src/homicidio-etnia-documentados.html output/
 
-output/reclutamiento-is_conflict-imputados.html: \
-		src/reclutamiento-is_conflict-imputados.Rmd
+output/homicidio-macroregion_cev-documentados.html: \
+		src/homicidio-macroregion_cev-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/reclutamiento-is_conflict-imputados.html output/
+		mv src/homicidio-macroregion_cev-documentados.html output/
 
-output/reclutamiento-perpetrador-imputados.html: \
-		src/reclutamiento-perpetrador-imputados.Rmd
+output/reclutamiento-anio-documentados.html: \
+		src/reclutamiento-anio-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/reclutamiento-perpetrador-imputados.html output/
+		mv src/reclutamiento-anio-documentados.html output/
 
-output/reclutamiento-departamento-imputados.html: \
-		src/reclutamiento-departamento-imputados.Rmd
+output/reclutamiento-is_conflict-documentados.html: \
+		src/reclutamiento-is_conflict-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/reclutamiento-departamento-imputados.html output/
+		mv src/reclutamiento-is_conflict-documentados.html output/
 
-output/secuestro-anio-imputados.html: \
-		src/secuestro-anio-imputados.Rmd
+output/reclutamiento-perpetrador-documentados.html: \
+		src/reclutamiento-perpetrador-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/secuestro-anio-imputados.html output/
+		mv src/reclutamiento-perpetrador-documentados.html output/
 
-output/secuestro-sexo-imputados.html: \
-		src/secuestro-sexo-imputados.Rmd
+output/reclutamiento-departamento-documentados.html: \
+		src/reclutamiento-departamento-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/secuestro-sexo-imputados.html output/
+		mv src/reclutamiento-departamento-documentados.html output/
 
-output/secuestro-is_conflict-imputados.html: \
-		src/secuestro-is_conflict-imputados.Rmd
+output/reclutamiento-etnia-documentados.html: \
+		src/reclutamiento-etnia-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/secuestro-is_conflict-imputados.html output/
+		mv src/reclutamiento-etnia-documentados.html output/
 
-output/secuestro-perpetrador-imputados.html: \
-		src/secuestro-perpetrador-imputados.Rmd
+output/reclutamiento-macroregion_cev-documentados.html: \
+		src/reclutamiento-macroregion_cev-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/secuestro-perpetrador-imputados.html output/
+		mv src/reclutamiento-macroregion_cev-documentados.html output/
 
-output/secuestro-departamento-imputados.html: \
-		src/secuestro-departamento-imputados.Rmd
+output/secuestro-anio-documentados.html: \
+		src/secuestro-anio-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/secuestro-departamento-imputados.html output/
+		mv src/secuestro-anio-documentados.html output/
 
-output/desaparicion-sexo-imputados.html: \
-		src/desaparicion-sexo-imputados.Rmd
+output/secuestro-sexo-documentados.html: \
+		src/secuestro-sexo-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/desaparicion-sexo-imputados.html output/
+		mv src/secuestro-sexo-documentados.html output/
 
-output/desaparicion-is_conflict-imputados.html: \
-		src/desaparicion-is_conflict-imputados.Rmd
+output/secuestro-is_conflict-documentados.html: \
+		src/secuestro-is_conflict-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/desaparicion-is_conflict-imputados.html output/
+		mv src/secuestro-is_conflict-documentados.html output/
 
-output/desaparicion-perpetrador-imputados.html: \
-		src/desaparicion-perpetrador-imputados.Rmd
+output/secuestro-perpetrador-documentados.html: \
+		src/secuestro-perpetrador-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/desaparicion-perpetrador-imputados.html output/
+		mv src/secuestro-perpetrador-documentados.html output/
 
-output/desaparicion-departamento-imputados.html: \
-		src/desaparicion-departamento-imputados.Rmd
+output/secuestro-departamento-documentados.html: \
+		src/secuestro-departamento-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/desaparicion-departamento-imputados.html output/
+		mv src/secuestro-departamento-documentados.html output/
+
+output/secuestro-etnia-documentados.html: \
+		src/secuestro-etnia-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/secuestro-etnia-documentados.html output/
+
+output/secuestro-macroregion_cev-documentados.html: \
+		src/secuestro-macroregion_cev-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/secuestro-macroregion_cev-documentados.html output/
+
+output/desaparicion-sexo-documentados.html: \
+		src/desaparicion-sexo-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/desaparicion-sexo-documentados.html output/
+
+output/desaparicion-is_conflict-documentados.html: \
+		src/desaparicion-is_conflict-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/desaparicion-is_conflict-documentados.html output/
+
+output/desaparicion-perpetrador-documentados.html: \
+		src/desaparicion-perpetrador-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/desaparicion-perpetrador-documentados.html output/
+
+output/desaparicion-departamento-documentados.html: \
+		src/desaparicion-departamento-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/desaparicion-departamento-documentados.html output/
+
+output/desaparicion-etnia-documentados.html: \
+		src/desaparicion-etnia-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/desaparicion-etnia-documentados.html output/
+
+output/desaparicion-macroregion_cev-documentados.html: \
+		src/desaparicion-macroregion_cev-documentados.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+		mv src/desaparicion-macroregion_cev-documentados.html output/
 
 # Done
