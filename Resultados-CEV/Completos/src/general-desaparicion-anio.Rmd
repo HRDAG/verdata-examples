@@ -293,10 +293,9 @@ por año del hecho. Para empezar, es necesario filtrar por las variables de
 
 ```{r estratificacion, echo = TRUE}
 
-replicas_estratos <- replicas_filtradas %>% 
+replicas_estratos <- replicas_datos %>% 
   dplyr::mutate(is_conflict = as.integer(is_conflict)) %>% 
-  dplyr::filter(is_conflict == 1) %>% 
-  dplyr::filter(is_forced_dis == 1)
+  dplyr::filter(is_conflict == 1)
 
 paged_table(replicas_estratos, options = list(rows.print = 10, cols.print = 5))
 
@@ -358,7 +357,7 @@ A continuación se aplica la función:
 
 ```{r stratify-continuacion, echo = TRUE}
 
-schema <- ("replica,yy_hecho")
+schema <- ("replica,yy_hecho,is_forced_dis")
 
 listas <- stratify(replicas_estratos, schema)
 
@@ -374,22 +373,24 @@ Lo que obtenemos es lo siguiente:
 
 El objeto **listas** contiene dos listas. La primera, llamada **strata_data** data
 contiene las víctimas que fueron víctimas de desaparición en cada uno de los años
-para cada una de las réplicas. Por ejemplo, el elemento 151 de la lista contiene 
-las víctimas de desaparición en 2007 presentes en la réplica 4:
+para cada una de las réplicas. Por ejemplo, el elemento 150 de la lista contiene 
+las víctimas de desaparición forzada (`is_forced_dis` == 1) en 1995 presentes en 
+la réplica 2:
 
 ```{r stratify-continuacion2, echo = TRUE}
 
 datos <- listas[["strata_data"]]
 
-replica4_2007 <- datos[[151]]
+replica2_1995 <- datos[[150]]
 
-paged_table(replica4_2007, options = list(rows.print = 10, cols.print = 5))
+paged_table(replica2_1995, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
 La segunda lista, llamada **stratification_vars**, contiene el nombre de cada 
-estrato. Siguiendo el mismo ejemplo, el elemento 151 de **stratification_vars** 
-contiene una columna con la réplica (R4) y una columna con el año (2007). 
+estrato. Siguiendo el mismo ejemplo, el elemento 150 de **stratification_vars** 
+contiene una columna con la réplica (R2), una columna con el año (1995) y una 
+columna con el valor de `is_forced_dis` (1). 
 Nuevamente, este solo es un ejemplo de nuestra forma de estratificar, usted puede 
 hacerlo de otra manera. La idea principal es agrupar las víctimas por las 
 variables del estrato y las réplicas que esté usando.
@@ -398,9 +399,9 @@ variables del estrato y las réplicas que esté usando.
 
 nombres <- listas[["stratification_vars"]]
 
-replica4_2007_nombre <- nombres[[151]]
+replica2_1995_nombre <- nombres[[150]]
 
-paged_table(replica4_2007_nombre, options = list(rows.print = 10, cols.print = 5))
+paged_table(replica2_1995_nombre, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
@@ -452,7 +453,7 @@ entre las estimacines si el estrato que usted quiere analizar ya fue estimado.
 
 ```{r estimaciones-files, echo = TRUE}
 
-estimaciones_dir <- here::here("estimaciones")
+estimaciones_dir <- here::here("estimates")
 
 ```
 
@@ -470,6 +471,8 @@ estimacion <- purrr::map2_dfr(.x = listas$strata_data,
                               .y = listas$stratification_vars,
                               .f = mse,
                               estimates_dir = estimaciones_dir)
+
+```
 
 estimacion <- estimacion %>% 
   mutate(replica = stratum_name$replica,
