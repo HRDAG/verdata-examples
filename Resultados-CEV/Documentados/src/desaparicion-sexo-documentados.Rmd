@@ -58,8 +58,8 @@ tabla 7 de la página 15 del [anexo metodológico del proyecto](https://www.comi
 Se comienza autenticando e importando la base de datos, esto a 
 través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
 `read_replicates`. La autenticación de los datos es pertinente dado que estos 
-fueron publicados con la licencia de atribución 4.0 internacional de Creative 
-Commons (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
+fueron publicados con la licencia de atribución 4.0 internacional de *Creative Commons* 
+(CC BY 4.0). Esta licencia permite la distribución y modificación de la 
 información. Considerando que usted pudo haber llegado a estos datos por medio 
 de diferentes fuentes, es importante que sepa si han sido modificados o no, para 
 lo que puede hacer uso de estas dos funciones. 
@@ -68,9 +68,9 @@ La función `confirm_files` autentica los archivos que han sido descargados.
 Considerando que cada violación tiene hasta 100 réplicas, esta función permite
 autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en 
 caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
-realizar su análisis con todas las réplicas. Esta función devolvera el mensaje 
+realizar su análisis con todas las réplicas. Esta función devolverá el mensaje 
 _"You have the right file!"_ si los archivos son iguales a los publicados, o 
-el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ si no lo son. 
+el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ en caso contrario.
 
 ```{r confirm-replicates, eval=FALSE}
 
@@ -82,8 +82,8 @@ verdata::confirm_files(here::here("verdata-parquet/desaparicion"),
 Además, la función `read_replicates` permite 2 cosas: leer las réplicas a R en
 una sola tabla (ya sea a partir de un formato *csv* o *parquet*) y verificar 
 que el contenido de las réplicas sea exactamente igual al publicado.
-Cuando el argumento `crash` tiene su valor por default (TRUE), la función 
-retorna un objeto (data frame) si el contenido es igual, y el mensaje
+Cuando el argumento `crash` tiene su valor por *default* (TRUE), la función 
+retorna un objeto (*data frame*) si el contenido es igual, y el mensaje
 _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue 
 previamente alterado/modificada, lo que quiere decir que los análisis que el 
 usuario realice hacer serán inconsistentes y llevarán a resultados erróneos. 
@@ -118,10 +118,10 @@ el año del hecho, la pertenencia étnica, entre otros.
 
 ## Víctimas documentadas {-}
 
-Es momentode obtener la información de las víctimas documentadas por nuestra variable de interés. 
+Es momento de obtener la información de las víctimas documentadas por nuestra variable de interés. 
 Estos datos son aquellos que ya se observaban en la base integrada y que 
 en ocasiones contenían campos faltantes en algunas de las variables. 
-Usaremos pues la función `summary_observed` para calcular dicha documentación.
+Usaremos la función `summary_observed` para calcular dicha documentación.
 
 Como se puede ver, los argumentos de la función son: 1) la violación a analizar;
 2) los datos **replicas_datos**; 3) **strata_vars**, que para este ejemplo 
@@ -154,11 +154,11 @@ tabla_documentada <- verdata::summary_observed("desaparicion",
 paged_table(tabla_documentada, options = list(rows.print = 4, cols.print = 4))
 
 ```
-Entonces, lo primero que podemos evidenciar es estas son las víctimas que fueron
-documentadas dentro del marco del conflicto armado y desaparecidas de forma foezada,
+Entonces, lo primero que podemos evidenciar que estas son las víctimas que fueron
+documentadas dentro del marco del conflicto armado y desaparecidas de forma forzada,
 es decir, excluimos aquellas víctimas no relacionadas y también a aquellas en 
-las que existía ambiguedad de si hacían parte o no de dichos fenómenos (es decir,
-que presentan campos faltantes).Además, evidenciamos que no conocemos el sexo de `r myNum(tabla_documentada$observed[3])` víctimas de esta violación, por lo que en el siguiente [ejemplo](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Imputacion/output/desaparicion-sexo-imputado.html) veremos que estas fueron objeto de la imputación estadística múltiple y 
+las que existía ambigüedad de si hacían parte o no de dichos fenómenos (es decir,
+que presentan campos faltantes. Además, evidenciamos que no conocemos el sexo de `r myNum(tabla_documentada$observed[3])` víctimas de esta violación, por lo que en el siguiente [ejemplo](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Imputacion/output/desaparicion-sexo-imputado.html) veremos que estas fueron objeto de la imputación estadística múltiple y 
 que por ende estas víctimas "pasaron" a ser parte de una de estas categorías. 
 Seguido de esto vemos que `r myNum(tabla_documentada$observed[1])`
 personas fueron documentadas como víctimas hombres mientras que `r myNum(tabla_documentada$observed[2])`
@@ -166,7 +166,7 @@ fueron víctimas mujeres.
 
 Por último, guardamos los resultados (en formato *.parquet*) en una carpeta 
 denominada "output-documentados", ya que esta tabla nos servirá como insumo para el 
-cálculo de la combinación de las imputaciones acorde con las reglas de 
+cálculo de la combinación de las imputaciones (o réplicas) acorde con las reglas de 
 *combinación* de Rubin.
 
 ```{r save-observed, echo = TRUE}

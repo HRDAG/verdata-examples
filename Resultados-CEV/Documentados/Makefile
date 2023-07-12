@@ -16,26 +16,26 @@ all: \
 	output/reclutamiento-perpetrador-documentados.html \
 	output/reclutamiento-departamento-documentados.html \
 	output/reclutamiento-etnia-documentados.html \
-	output/reclutamiento-macroregion_cev-documentados.html	\
+	output/reclutamiento-macrorregion_cev-documentados.html	\
 	output/desaparicion-sexo-documentados.html \
 	output/desaparicion-is_conflict-documentados.html \
 	output/desaparicion-perpetrador-documentados.html \
 	output/desaparicion-departamento-documentados.html \
 	output/desaparicion-etnia-documentados.html \
-	output/desaparicion-macroregion_cev-documentados.html	\
+	output/desaparicion-macrorregion_cev-documentados.html	\
 	output/secuestro-anio-documentados.html	\
 	output/secuestro-sexo-documentados.html	\
 	output/secuestro-is_conflict-documentados.html \
 	output/secuestro-perpetrador-documentados.html \
 	output/secuestro-departamento-documentados.html \
 	output/secuestro-etnia-documentados.html \
-	output/secuestro-macroregion_cev-documentados.html	\
+	output/secuestro-macrorregion_cev-documentados.html	\
 	output/homicidio-anio-documentados.html \
 	output/homicidio-sexo-documentados.html \
 	output/homicidio-is_conflict-documentados.html \
 	output/homicidio-departamento-documentados.html \
 	output/homicidio-etnia-documentados.html	\
-	output/homicidio-macroregion_cev-documentados.html
+	output/homicidio-macrorregion_cev-documentados.html
 
 clean:
 	rm output/*
@@ -70,11 +70,11 @@ output/reclutamiento-etnia-documentados.html: \
 		Rscript -e "rmarkdown::render('$<')"
 		mv src/reclutamiento-etnia-documentados.html output/
 
-output/reclutamiento-macroregion_cev-documentados.html: \
-		src/reclutamiento-macroregion_cev-documentados.Rmd
+output/reclutamiento-macrorregion_cev-documentados.html: \
+		src/reclutamiento-macrorregion_cev-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/reclutamiento-macroregion_cev-documentados.html output/
+		mv src/reclutamiento-macrorregion_cev-documentados.html output/
 
 output/secuestro-anio-documentados.html: \
 		src/secuestro-anio-documentados.Rmd
@@ -112,11 +112,11 @@ output/secuestro-etnia-documentados.html: \
 		Rscript -e "rmarkdown::render('$<')"
 		mv src/secuestro-etnia-documentados.html output/
 
-output/secuestro-macroregion_cev-documentados.html: \
-		src/secuestro-macroregion_cev-documentados.Rmd
+output/secuestro-macrorregion_cev-documentados.html: \
+		src/secuestro-macrorregion_cev-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/secuestro-macroregion_cev-documentados.html output/
+		mv src/secuestro-macrorregion_cev-documentados.html output/
 
 output/desaparicion-sexo-documentados.html: \
 		src/desaparicion-sexo-documentados.Rmd
@@ -148,11 +148,11 @@ output/desaparicion-etnia-documentados.html: \
 		Rscript -e "rmarkdown::render('$<')"
 		mv src/desaparicion-etnia-documentados.html output/
 
-output/desaparicion-macroregion_cev-documentados.html: \
-		src/desaparicion-macroregion_cev-documentados.Rmd
+output/desaparicion-macrorregion_cev-documentados.html: \
+		src/desaparicion-macrorregion_cev-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/desaparicion-macroregion_cev-documentados.html output/
+		mv src/desaparicion-macrorregion_cev-documentados.html output/
 
 output/homicidio-anio-documentados.html: \
 		src/homicidio-anio-documentados.Rmd
@@ -190,11 +190,10 @@ output/homicidio-etnia-documentados.html: \
 		Rscript -e "rmarkdown::render('$<')"
 		mv src/homicidio-etnia-documentados.html output/
 
-output/homicidio-macroregion_cev-documentados.html: \
-		src/homicidio-macroregion_cev-documentados.Rmd
+output/homicidio-macrorregion_cev-documentados.html: \
+		src/homicidio-macrorregion_cev-documentados.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-		mv src/homicidio-macroregion_cev-documentados.html output/
-
+		mv src/homicidio-macrorregion_cev-documentados.html output/
 
 # Done

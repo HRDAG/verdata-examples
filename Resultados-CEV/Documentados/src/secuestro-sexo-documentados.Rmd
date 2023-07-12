@@ -58,8 +58,8 @@ tabla 10 de la página 16 del [anexo metodológico del proyecto](https://www.com
 Se comienza autenticando e importando la base de datos de secuestro, esto a 
 través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
 `read_replicates`. La autenticación de los datos es pertinente dado que estos 
-fueron publicados con la licencia de atribución 4.0 internacional de *Creative 
-Commons* (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
+fueron publicados con la licencia de atribución 4.0 internacional de *Creative Commons* 
+(CC BY 4.0). Esta licencia permite la distribución y modificación de la 
 información. Considerando que usted pudo haber llegado a estos datos por medio 
 de diferentes fuentes, es importante que sepa si han sido modificados o no, para 
 lo que puede hacer uso de estas dos funciones. 
@@ -68,9 +68,9 @@ La función `confirm_files` autentica los archivos que han sido descargados.
 Considerando que cada violación tiene hasta 100 réplicas, esta función permite
 autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en 
 caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
-realizar su análisis con todas las réplicas. Esta función devolvera el mensaje 
+realizar su análisis con todas las réplicas. Esta función devolverá el mensaje 
 _"You have the right file!"_ si los archivos son iguales a los publicados, o 
-el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ si no lo son. 
+el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ en caso contrario. 
 
 ```{r confirm-replicates, eval=FALSE}
 
@@ -82,8 +82,8 @@ verdata::confirm_files(here::here("verdata-parquet/secuestro"),
 Además, la función `read_replicates` permite 2 cosas: leer las réplicas a R en
 una sola tabla (ya sea a partir de un formato *csv* o *parquet*) y verificar 
 que el contenido de las réplicas sea exactamente igual al publicado.
-Cuando el argumento `crash` tiene su valor por *default* (TRUE), la función 
-retorna un objeto (data frame) si el contenido es igual, y el mensaje
+Cuando el argumento `crash` tiene su valor por **default** (TRUE), la función 
+retorna un objeto (*data frame*) si el contenido es igual, y el mensaje
 _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue 
 previamente alterado/modificado, lo que quiere decir que los análisis que el 
 usuario realice serán inconsistentes y llevarán a resultados erróneos. Este 
@@ -177,7 +177,7 @@ tabla_documentada <- verdata::summary_observed("secuestro",
 paged_table(tabla_documentada, options = list(rows.print = 4, cols.print = 4))
 
 ```
-Entonces, lo primero que podemos evidenciar es estas son las víctimas que fueron
+Entonces, lo primero que podemos evidenciar es que estas son las víctimas que fueron
 documentadas dentro del marco del conflicto armado, es decir, excluimos aquellas 
 víctimas no relacionadas y también a aquellas en las que existía ambigüedad de 
 si hacían parte o no de dicho fenómeno (es decir, que presentan campos faltantes).

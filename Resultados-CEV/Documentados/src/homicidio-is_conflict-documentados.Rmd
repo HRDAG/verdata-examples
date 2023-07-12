@@ -68,9 +68,9 @@ La función `confirm_files` autentica los archivos que han sido descargados.
 Considerando que cada violación tiene hasta 100 réplicas, esta función permite
 autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en 
 caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
-realizar su análisis con todas las réplicas. Esta función devolvera el mensaje 
+realizar su análisis con todas las réplicas. Esta función devolverá el mensaje 
 _"You have the right file!"_ si los archivos son iguales a los publicados, o 
-el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ si no lo son. 
+el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ en caso contrario. 
 
 ```{r confirm-replicates, eval=FALSE}
 
@@ -82,8 +82,8 @@ verdata::confirm_files(here::here("verdata-parquet/homicidio"),
 Además, la función `read_replicates` permite 2 cosas: leer las réplicas a R en
 una sola tabla (ya sea a partir de un formato *csv* o *parquet*) y verificar 
 que el contenido de las réplicas sea exactamente igual al publicado.
-Cuando el argumento `crash` tiene su valor por default (TRUE), la función 
-retorna un objeto (data frame) si el contenido es igual, y el mensaje
+Cuando el argumento `crash` tiene su valor por *default* (TRUE), la función 
+retorna un objeto (*data frame*) si el contenido es igual, y el mensaje
 _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue 
 previamente alterado/modificada, lo que quiere decir que los análisis que el 
 usuario realice hacer serán inconsistentes y llevarán a resultados erróneos. 
@@ -116,10 +116,10 @@ van desde la número 1 hasta la 10. Además, nuestros datos tienen información
 sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
 el año del hecho, la pertenencia étnica, entre otros. 
 Sin embargo, para centrarnos en un análisis más específico, tal como el realizado
-para el informe metodológico, procederemos a transformar y/o filtrar 
+para el anexo metodológico, procederemos a transformar y/o filtrar 
 algunas variables. 
 
-## Filtrando las réplicas acorde con el filtro del informe metodológico {-}
+## Filtrando las réplicas acorde con el filtro del anexo metodológico {-}
 
 La función `filter_standard_cev` nos permite transformar o filtrar nuestra
 información. Por ejemplo, las víctimas que se documentaron como víctimas 
@@ -142,8 +142,8 @@ paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
 Después de aplicados los filtros necesarios con la función anterior, es momento 
 de obtener la información de las víctimas documentadas por nuestra variable de interés. 
 Estos datos son aquellos que ya se observaban en la base integrada y que 
-en ocasiones contenían campos faltantes en algunas de las variables. 
-Usaremos pues la función `summary_observed` para calcular dicha documentación.
+en ocasiones contenían campos faltantes en algunas de las variables. Usaremos la 
+función `summary_observed` para calcular dicha documentación.
 
 Como se puede ver, los argumentos de la función son: 1) la violación a analizar;
 2) los datos **replicas_filtradas**; 3) **strata_vars**, que para este ejemplo 
@@ -193,7 +193,7 @@ personas sí fueron víctimas dentro de este marco (de acuerdo con dichas fuente
 
 Por último, guardamos los resultados (en formato *.parquet*) en una carpeta 
 denominada "output-documentados", ya que esta tabla nos servirá como insumo para el 
-cálculo de la combinación de las imputaciones acorde con las reglas de 
+cálculo de la combinación de las imputaciones (o réplicas) acorde con las reglas de 
 *combinación* de Rubin.
 
 ```{r save-observed, echo = TRUE}
