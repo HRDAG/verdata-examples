@@ -15,8 +15,13 @@ all: \
 	output/secuestro-anio_sexo-estratificacion.html	\
 	output/homicidio-anio-estratificacion.html	\
 	output/homicidio-sexo-estratificacion.html \
-	output/desaparicion-sexo-estratificacion
-
+	output/desaparicion-sexo-estratificacion.html \
+	output/desaparicion-edad_c-estratificacion.html	\
+	output/desaparicion-etnia-estratificacion.html	\
+	output/desaparicion-departamento-estratificacion.html	\
+	output/desaparicion-macroregion_cev-estratificacion.html \
+	output/desaparicion-perpetrador-estratificacion.html
+	
 clean:
 	rm output/*
 
@@ -49,4 +54,34 @@ output/desaparicion-sexo-estratificacion.html: \
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
 				mv src/desaparicion-sexo-estratificacion.html output/
+
+output/desaparicion-edad_c-estratificacion.html: \
+		src/desaparicion-edad_c-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/desaparicion-edad_c-estratificacion.html output/
+
+output/desaparicion-etnia-estratificacion.html: \
+		src/desaparicion-etnia-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/desaparicion-etnia-estratificacion.html output/
+
+output/desaparicion-departamento-estratificacion.html: \
+		src/desaparicion-departamento-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/desaparicion-departamento-estratificacion.html output/
+
+output/desaparicion-macroregion_cev-estratificacion.html: \
+		src/desaparicion-macroregion_cev-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/desaparicion-macroregion_cev-estratificacion.html output/
+
+output/desaparicion-perpetrador-estratificacion.html: \
+		src/desaparicion-perpetrador-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/desaparicion-perpetrador-estratificacion.html output/
 # Done

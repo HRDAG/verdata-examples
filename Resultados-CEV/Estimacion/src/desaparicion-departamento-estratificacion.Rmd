@@ -1,6 +1,6 @@
 ---
 title: "Proceso de estratificación"
-subtitle: "Desapariciones forzadas desagregados por sexo - 1985–2016"
+subtitle: "Desapariciones forzadas desagregadas por departamento - 1985–2016"
 output:
   rmdformats::robobook:
     code_folding: show
@@ -49,7 +49,7 @@ https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducció
 antes de continuar. 
 
 En este ejemplo, se ilustrará el proceso de estratificación para el posterior
-proceso de estimación del total de víctimas por sexo (1985–2016). 
+proceso de estimación del total de víctimas por departamento (1985–2016). 
 
 ## Autenticando e importando la base de datos (réplicas) {-}
 
@@ -104,21 +104,44 @@ van desde la número 1 hasta la 10. Además, nuestros datos tienen información
 sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
 el año del hecho, la pertenencia étnica, las fuentes de información, entre otros. 
 
+## Filtrando las réplicas acorde con el filtro del informe metodológico {-}
+
+Antes de comenzar a estratificar debemos generar algunas variables adicionales. 
+La función `filter_standard_cev` nos permite obtener dicha información (tal como 
+la creación de una nueva categoría de tiempo). En este sentido los argumentos de 
+la misma son: los datos anteriormente importados, la violación a analizar y 
+un argumento que, si es igual a TRUE, aquellas víctimas que se documentaron 
+como víctimas de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a 
+ser víctimas de otras guerrillas, ya que este primer grupo oficialmente dejó de 
+existir después de dicho año (`perp_change` = TRUE). Sin embargo, como la 
+temporalidad de este hecho llega hasta dicho año no tendría sentido aplicar este 
+cambio, por lo tanto este argumento será igual a FALSE.
+
+```{r filter-cev, echo = TRUE}
+
+replicas_filtradas <- verdata::filter_standard_cev(replicas_datos,
+                                                   "desaparicion", 
+                                                   perp_change = FALSE) 
+
+paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
+
+```
+
 ## Proceso estratificación para estimaciones {-}
 
-Con el fin de controlar la heterogeneidad  en las probabilidades de captura 
+Ahora bien, con el fin de controlar la heterogeneidad  en las probabilidades de captura 
 (ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se estratifica la información de acuerdo con el análisis a realizar. En este caso, 
-como queremos estimar el subregistro de la presente violación por sexo,
-se estratificará por año del hecho, la variable de "es desaparición forzada" y sexo. 
-Para empezar, es necesario filtrar por las variables de "pertenece al conflicto" 
+como queremos estimar el subregistro de la presente violación por departamento,
+se estratificará por quinquenio y el departamento del hecho. Sin embargo, es 
+necesario filtrar primero por las variables de "pertenece al conflicto", 
 `is_conflict` y la anteriormente mencionada `is_forced_dis`.
 
 ```{r estratificacion, echo = TRUE}
 
-replicas_estratos <- replicas_datos %>% 
+replicas_estratos <- replicas_filtradas %>% 
   dplyr::mutate(is_conflict = as.integer(is_conflict)) %>% 
   dplyr::filter(is_conflict == 1) %>% 
-  dplyr::mutate(is_forced_dis == as.integer(is_forced_dis)) %>% 
+  dplyr::mutate(is_forced_dis = as.integer(is_forced_dis)) %>% 
   dplyr::filter(is_forced_dis == 1)
 
 paged_table(replicas_estratos, options = list(rows.print = 10, cols.print = 5))
@@ -158,8 +181,7 @@ Entonces, en primera instancia creamos una función que necesita de dos
 argumentos:
 
 -  El argumento **replicate_data** se refiere a un data frame a estratificar,
-que en nuestro caso es **replicas_estratos**, es decir, la información previamente 
-filtrada.
+que en nuestro caso es **replicas_estratos**.
 
 - El segundo argumento son las variables de estratificación (**schema**). 
 Recordemos que la estratificación es un instrumento para controlar la heterogeneidad, 
@@ -180,7 +202,7 @@ A continuación se aplica la función:
 
 ```{r stratify-continuacion, echo = TRUE}
 
-schema <- ("replica,yy_hecho,is_forced_dis,sexo")
+schema <- ("replica,quinquenio,dept_code_hecho")
 
 listas <- stratify(replicas_estratos, schema)
 
@@ -189,16 +211,18 @@ listas <- stratify(replicas_estratos, schema)
 El paso anterior muestra la forma en la que aplicamos la función. Considerando 
 que en este ejemplo queremos estimar el número de víctimas de la presente violación
 por la(s) variable(s) nombrada(s), la estratificación se hace por la variable 
-**yy_hecho**, **is_forced_dis** y **sexo** para cada réplica. El objeto **schema** contiene una 
-cadena de caracteres con los nombres de las variables en el data frame. Luego, 
-como se mencionó, usamos la tabla **replicas_estratos** como primer argumento y el 
-objeto **schema** como segundo. Lo que obtenemos es lo siguiente:
+**quinquenio** y **departamento del hecho** para cada réplica. El objeto 
+**schema** contiene una cadena de caracteres con los nombres de las variables en 
+el data frame. Luego, como se mencionó, usamos la tabla **replicas_estratos**
+como primer argumento y el objeto **schema** como segundo. Lo que obtenemos es
+lo siguiente:
 
 El objeto **listas** contiene dos listas. La primera, llamada **strata_data** que
 contiene las víctimas que fueron víctimas de este hecho según sus característica
 para cada una de las réplicas. Por ejemplo, el elemento 10 de la lista contiene
-las mujeres que fueron desaparecidas de forma forzada en el año de 1989 presentes en 
-la réplica 1 (ver el objeto **victimas_estrato**:
+las víctimas del departamento de Córdoba que fueron desaparecidas de forma 
+forzada en el quinquenio de 1985 a 1989 presentes en la réplica 1 
+(ver el objeto **victimas_estrato**):
 
 ```{r stratify-continuacion2, echo = TRUE}
 
@@ -211,10 +235,10 @@ paged_table(victimas_estrato, options = list(rows.print = 10, cols.print = 5))
 ```
 La segunda lista, llamada **stratification_vars**, contiene el nombre de cada 
 estrato. Siguiendo el mismo ejemplo, el elemento 10 de **stratification_vars** 
-contiene una columna con la respectiva réplica, una columna con el año, la variable
-de desaparición forzada y el sexo. Nuevamente, este solo es un ejemplo de nuestra 
-forma de estratificar,usted puede hacerlo de otra manera. La idea principal es 
-agrupar las víctimas por las variables del estrato y las réplicas que esté usando.
+contiene una columna con la respectiva réplica, una columna con la variable de
+tiempo y el departamento. Nuevamente, este solo es un ejemplo de nuestra forma 
+de estratificar, usted puede hacerlo de otra manera. La idea principal es agrupar
+las víctimas por las variables del estrato y las réplicas que esté usando.
 
 ```{r stratify-continuacion3, echo = TRUE}
 
@@ -234,8 +258,8 @@ combinación de estas:
 ```{r save-estratify, echo = TRUE}
 
 saveRDS(listas, 
-        here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-is_forced_dis-sexo-desaparicion.rds"))
+        here::here("Resultados-CEV/Estimacion/output-estimacion/quinquenio-departamento-desaparicion.rds"))
 
 ```
 
-El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/desaparicion-sexo-estimacion.html).
+El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/desaparicion-departamento-estimacion.html).
