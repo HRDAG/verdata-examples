@@ -1,6 +1,6 @@
 ---
-title: "Proceso estratificación para estimaciones"
-subtitle: "Homicidios desagregado por año del hecho - 1985–2018"
+title: "Proceso de estratificación"
+subtitle: "Homicidios desagregados por año del hecho - 1985–2018"
 output:
   rmdformats::robobook:
     code_folding: show
@@ -11,6 +11,7 @@ output:
     use_bookdown: true
     highlight: kate
     embed_fonts: false
+knit: (function(inputFile, encoding) {rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output") })
 ---
 
 ```{r setup, echo = TRUE,include = FALSE}
@@ -20,6 +21,7 @@ pacman::p_load(ggplot2, dplyr, rmarkdown, verdata, LCMCR, here,
                gridExtra)
 
 options(warn = -1)
+
 ```
 
 ```{r numbers, include = FALSE}
@@ -46,8 +48,8 @@ estos ejemplos y el paquete `verdata`, consulte:
 https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducción.html 
 antes de continuar. 
 
-En este ejemplo se ilustrará el proceso de estratificación para el posterior 
-proceso de estimación del total de víctimas por año del hecho (1985–2018).
+En este ejemplo, se ilustrará el proceso de estratificación para el posterior
+proceso de estimación del total de víctimas por año del hecho (1985–2018). 
 
 ## Autenticando e importando la base de datos (réplicas) {-}
 
@@ -70,7 +72,7 @@ el error _"This file is not identical to the one published. This means the resul
 
 ```{r confirm-replicates, eval=FALSE}
 
-verdata::confirm_files(here::here("verdata-replicas/verdata-parquet"), 
+verdata::confirm_files(here::here("verdata-parquet/homicidio"), 
                                   "homicidio", 1, 10)
 
 ```
@@ -90,7 +92,7 @@ en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia.
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-replicas/verdata-parquet"),
+replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/homicidio"),
                                            "homicidio", 1, 10)
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
@@ -100,35 +102,33 @@ paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 Vemos que tenemos `r myNum(nrow(replicas_datos))` registros, nuestras réplicas 
 van desde la número 1 hasta la 10. Además, nuestros datos tienen información 
 sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
-el año del hecho, la pertenencia étnica, entre otros. 
-Sin embargo, para centrarnos en un análisis más específico, tal como el realizado
-para el informe metodológico, procederemos a transformar y/o filtrar 
-algunas variables. 
+el año del hecho, la pertenencia étnica, las fuentes de información, entre otros. 
 
-## Filtrando las réplicas acorde con el filtro del informe metodológico {-}
+## Proceso estratificación para estimaciones {-}
 
-La función `filter_standard_cev` nos permite transformar o filtrar nuestra
-información.
+Con el fin de controlar la heterogeneidad  en las probabilidades de captura 
+(ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se 
+estratifica la información de acuerdo con el análisis a realizar. En este caso, 
+como queremos estimar el subregistro de la presente violación por año del hecho,
+se estratificará por año del hecho y perpetrador. Para empezar, es necesario 
+filtrar por las variables de "pertenece al conflicto", `is_conflict` 
 
-```{r filter-cev, echo = TRUE}
+```{r estratificacion, echo = TRUE}
 
-replicas_filtradas <- verdata::filter_standard_cev(replicas_datos,
-                                                   "homicidio", 
-                                                   perp_change = FALSE) %>% 
-  dplyr::mutate(is_conflict = as.integer(is_conflict)) %>%
+replicas_estratos <- replicas_datos %>% 
+  dplyr::mutate(is_conflict = as.integer(is_conflict)) %>% 
   dplyr::filter(is_conflict == 1)
 
-paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
+paged_table(replicas_estratos, options = list(rows.print = 10, cols.print = 5))
 
 ```
-Como vemos, el primer proceso fue filtrar nuestros datos según nuestro interés. 
-Seguido de esto procedemos a estratificar. Es importante que usted como usuario
-vea que este proceso es netamente artesanal, es decir, usted puede usar 
-su propio código o funciones para realizar este proceso que, en nuestro caso, 
-será a través de una función previamente creada (fuera del paquete `verdata`)
-para facilitar este ejercicio:
+Seguido de esto se estratifica. Es importante que usted como usuario 
+vea que este proceso es netamente artesanal, es decir, usted puede usar su propio
+código o funciones para realizar este proceso que, en nuestro caso, será a través
+de una función previamente creada (fuera del paquete `verdata`) para facilitar 
+este ejercicio:
 
-```{r stratify, echo = TRUE}
+```{r estratificacion-funcion, echo = TRUE}
 
 stratify <- function(replicate_data, schema) {
     
@@ -147,75 +147,93 @@ stratify <- function(replicate_data, schema) {
     
     return(list(strata_data = split_data,
                 stratification_vars = stratification_vars))
-    
+
 }
 
 ```
 
-Entonces, en primera instancia creamos una función que necesita de dos (2) 
+Entonces, en primera instancia creamos una función que necesita de dos 
 argumentos:
 
-- La primera está relacionada con los *datos* que en nuestro caso son
-las **replicas_filtradas**.
+-  El argumento **replicate_data** se refiere a un data frame a estratificar,
+que en nuestro caso es **replicas_estratos**, es decir, la información previamente 
+filtrada.
 
-- La segunda son nuestras variables de estratificación (`schema`).
+- El segundo argumento son las variables de estratificación (**schema**). 
+Recordemos que la estratificación es un instrumento para controlar la heterogeneidad, 
+entonces estas son variables que pensamos pueden afectar la probabilidad de 
+registro de las víctimas y, por lo tanto, queremos agrupar las víctimas con 
+características similares. Todas estas variables deben encontrarse en el objeto 
+**replicas_estratos**.
 
-En términos generales, lo que hace esta función es: primero agrupa por nuestras 
-variables de estratificación y guarda esta información en un objeto llamado 
-`grouped_data`; también definimos el nombre de nuestra estratificación.
-Luego, `split_data` va a dividir nuestros datos previamente agrupados 
-(en `group_data`) retornando una lista: `strata_data` que será los subconjuntos
-de datos de acuerdo con la estratificación y `stratification_vars` que contiene 
-las combinaciones (nombres) de nuestras variables. Sin embargo, es importante
-aclarar que este ejercicio se realiza para cada réplica, por lo que aplicaremos
-algo denominado "iteración", es decir, repetir el proceso varias veces
-(por réplica). Esto lo veremos con más detalle a continuación:
+En términos generales, lo que hace esta función es: primero agrupa por las
+variables de estratificación y guarda en una lista llamada **strata_data** esta 
+información. En ese sentido, cada elemento de la lista es una tabla con las
+víctimas que hacen parte de ese estrato. En segundo lugar, se define el 
+nombre de cada estrato para poder identificarlos cuando estimemos. 
+Para esto se retorna una lista llamada **stratification_vars** que 
+contiene las combinaciones de las variables, es decir, el nombre del estrato. 
+
+A continuación se aplica la función:
 
 ```{r stratify-continuacion, echo = TRUE}
 
-replicas <- paste0("R", 1:10)
-resultados <- list()
+schema <- ("replica,yy_hecho,p_str")
 
-for (replica in replicas) {
-  strata_data <- replicas_filtradas[replicas_filtradas$replica == replica, ]
-  
-  var <- "p_str"
-  strata <- stratify(strata_data, c("yy_hecho", var, sep = ","))
-  
-  resultados[[replica]] <- strata
-}
+listas <- stratify(replicas_estratos, schema)
 
 ```
+
+El paso anterior muestra la forma en la que aplicamos la función. Considerando 
+que en este ejemplo queremos estimar el número de víctimas de la presente violación
+por la(s) variable(s) nombrada(s), la estratificación se hace por la variable 
+**yy_hecho** y **p_str** para cada réplica. El objeto **schema** contiene una 
+cadena de caracteres con los nombres de las variables en el data frame. Luego, 
+como se mencionó, usamos la tabla **replicas_estratos** como primer argumento y el 
+objeto **schema** como segundo. Lo que obtenemos es lo siguiente:
+
+El objeto **listas** contiene dos listas. La primera, llamada **strata_data** data
+contiene las víctimas que fueron víctimas de este hecho en cada uno de los años 
+-desagregado por perpetrador- para cada una de las réplicas. Por ejemplo, el 
+elemento 151 de la lista contiene las víctimas de otras guerillas en el año 2006
+presentes en la réplica 1 (ver el objeto **victimas_estrato**:
 
 ```{r stratify-continuacion2, echo = TRUE}
 
-replica6_grupo6 <- resultados[["R6"]][["strata_data"]][[6]]
+datos <- listas[["strata_data"]]
 
-paged_table(replica6_grupo6, options = list(rows.print = 10, cols.print = 5))
+victimas_estrato <- datos[[151]]
+
+paged_table(victimas_estrato, options = list(rows.print = 10, cols.print = 5))
 
 ```
+La segunda lista, llamada **stratification_vars**, contiene el nombre de cada 
+estrato. Siguiendo el mismo ejemplo, el elemento 151 de **stratification_vars** 
+contiene una columna con la réplica (R1), una columna con el año (2006) y el 
+perpetrador. Nuevamente, este solo es un ejemplo de nuestra forma de estratificar,
+usted puede hacerlo de otra manera. La idea principal es agrupar las víctimas
+por las variables del estrato y las réplicas que esté usando.
+
 ```{r stratify-continuacion3, echo = TRUE}
 
-replica6_grupo6_estrato <- resultados[["R6"]][["stratification_vars"]][[6]]
+nombres <- listas[["stratification_vars"]]
 
-paged_table(replica6_grupo6_estrato, options = list(rows.print = 10, cols.print = 5))
+victimas_estrato_nombre <- nombres[[151]]
+
+paged_table(victimas_estrato_nombre, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
-Acorde con lo visto en estos códigos, definimos nuestras variables de estratificación,
-estratificamos nuestros datos filtrados (mostrando algo como unas "mini-bases" 
-de datos, como la réplica 6) y por último definimos los nombres de esas agrupaciones
-las cuales muestran todas las combinaciones entre estas dos variables (por ejemplo
-lo que muestra *replica6_grupo6_estrato*).
-
-Teniendo esta estratificación procederemos a guardar el objeto `results` en 
-nuestra maquina local (con la función `saveRDS`) para usarlo en nuestro próximo 
-ejemplo sobre estimación por sistemas múltiples (ESM):
+Teniendo esta estratificación procederemos a guardar el objeto `listas` 
+en nuestra maquina local (con la función `saveRDS`) para usarlo en nuestro 
+próximo ejemplo sobre estimación por sistemas múltiples (ESM) y la posterior
+combinación de estas:
 
 ```{r save-estratify, echo = TRUE}
 
-saveRDS(resultados, here::here("Resultados-CEV/output-estratificacion/homicidio-yy_hecho-p_str.rds"))
+saveRDS(listas, 
+        here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-p_str-homicidio.rds"))
 
 ```
 
-El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/output/homicidio-anio-estimacion.html)
+El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/homicidio-anio-estimacion.html).
