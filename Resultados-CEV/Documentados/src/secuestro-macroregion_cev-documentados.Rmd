@@ -1,6 +1,6 @@
 ---
 title: "Proceso de cálculo de víctimas documentadas"
-subtitle: "Secuestros desagregados por macroregion de la CEV - 1990–2018"
+subtitle: "Secuestros desagregados por macrorregiones de la CEV - 1990–2018"
 output:
   rmdformats::robobook:
     code_folding: show
@@ -49,12 +49,12 @@ https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducció
 antes de continuar. 
 
 En este ejemplo, se ilustrará el proceso para obtener los datos documentados de 
-la presente violación (desagregación por macroregiones de la CEV). Para esto
-necesitaremos un insumo adicional que serán las macroregiones que se generaron
-en la Comisión de la Verdad (CEV). Procederemos a importar dicho insumo que se 
-se encuentra en la carpeta "recursos" a partir del paquete `readr`:
+la presente violación (desagregado por macrorregiones de la CEV). Para esto
+necesitaremos un insumo adicional que serán las [macrorregiones](https://web.comisiondelaverdad.co/actualidad/noticias/comision-de-la-verdad-inicia-el-despliegue-exploratorio-en-macroregiones#:~:text=Las%20nueve%20macrorregiones%20definidas%20son,Magdalena%2C%20Sucre%20y%20San%20Andr%C3%A9s.) que se crearon en la Comisión de la Verdad (CEV). Así, procederemos a importar 
+dicho insumo que se encuentra en la carpeta "Recursos" (usando el paquete `readr`) 
+y realizando otras operaciones hechas para obtener los resultados por dicha variable:
 
-```{r macroregion, include=TRUE}
+```{r macrorregion, include=TRUE}
 
 macro_regiones <- readr::read_delim(here::here("Recursos/macroregiones_cev.csv"), 
                                     delim = "|", show_col_types = FALSE) %>%
@@ -70,16 +70,16 @@ paged_table(macro_regiones, options = list(rows.print = 10, cols.print = 5))
 ```
 ## Autenticando e importando la base de datos (réplicas) {-}
 
-Después de esto procedemos autenticando e importando la base de datos, esto a 
-través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
+Se comienza autenticando e importando la base de datos, esto a través de dos 
+funciones del paquete `verdata`: las funciones `confirm_files` y 
 `read_replicates`. La autenticación de los datos es pertinente dado que estos 
-fueron publicados con la licencia de atribución 4.0 internacional de Creative 
-Commons (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
-información. Considerando que usted pudo haber llegado a estos datos por medio 
+fueron publicados con la licencia de atribución 4.0 internacional de *Creative 
+Commons* (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
+informació y, considerando que usted pudo haber llegado a estos datos por medio 
 de diferentes fuentes, es importante que sepa si han sido modificados o no, para 
 lo que puede hacer uso de estas dos funciones. 
 
-La función `confirm_files` autentica los archivos que han sido descargados. 
+Así, la función `confirm_files` autentica los archivos que han sido descargados. 
 Considerando que cada violación tiene hasta 100 réplicas, esta función permite
 autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en 
 caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
@@ -97,21 +97,21 @@ verdata::confirm_files(here::here("verdata-parquet/secuestro"),
 Además, la función `read_replicates` permite 2 cosas: leer las réplicas a R en
 una sola tabla (ya sea a partir de un formato *csv* o *parquet*) y verificar 
 que el contenido de las réplicas sea exactamente igual al publicado.
-Cuando el argumento `crash` tiene su valor por default (TRUE), la función 
+Cuando el argumento `crash` tiene su valor por *default* (TRUE), la función 
 retorna un objeto (data frame) si el contenido es igual, y el mensaje
-_"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue 
-previamente alterado/modificada, lo que quiere decir que los análisis que el 
-usuario realice hacer serán inconsistentes y llevarán a resultados erróneos. 
-Este último error significa que nos datos no se han leído a R. Si por alguna 
-razón, usted quiere leer los datos a pesar de saber que no son los mismos datos 
-originamente publicados, puede cambiar el argumento `crash` a FALSE, y, 
-en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia. 
+_"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue previamente alterado/modificado,
+lo que quiere decir que los análisis que el usuario realice serán inconsistentes 
+y llevarán a resultados erróneos. Este último error significa que los datos 
+no se han leído a R. Ahora bien, si por alguna razón, usted quiere leer los 
+datos a pesar de saber que no son los mismos datos originalmente publicados, 
+puede cambiar el argumento `crash` a FALSE, y, en ese caso, podrá ver esta 
+información junto con el mismo mensaje de advertencia. 
 
-En este ejemplo trabajaremos las réplicas 1 a la 10. Usted puede trabajar con 
-las réplicas que desee de acuerdo con los análisis que desee realizar.
-Además, como se ha mencionado, esta información documentada se refiere a las 
+Así, en este ejemplo trabajaremos las réplicas 1 a la 10. Usted puede trabajar con 
+las réplicas que desee de acuerdo con los análisis que desee realizar, ya que, 
+como se ha mencionado, esta información documentada se refiere a las 
 víctimas que fueron registradas originalmente en las bases (y en el que algunos 
-registros contienen campos faltantes). Es decir, contrario a los ejemplos de 
+registros contienen campos faltantes), es decir, contrario a los ejemplos de 
 imputación, esta documentación no cambia para ninguna réplica, por lo que si 
 usted quiere obtener lo que las fuentes documentaron o registraron, puede optar 
 por diferentes números de réplica y no solamente las 10 primeras que se usaron 
@@ -129,19 +129,18 @@ paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 Vemos que tenemos `r myNum(nrow(replicas_datos))` registros, nuestras réplicas 
 van desde la número 1 hasta la 10. Además, nuestros datos tienen información 
 sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
-el año del hecho, la pertenencia étnica, entre otros. 
-Sin embargo, para centrarnos en un análisis más específico, tal como el realizado
-para el informe metodológico, procederemos a transformar y/o filtrar 
-algunas variables. 
+el año del hecho, la pertenencia étnica, entre otros. Sin embargo, para centrarnos
+en un análisis más específico, tal como el realizado para el anexo metodológico,
+procederemos a transformar y/o filtrar algunas variables.
 
 ## Filtrando las réplicas acorde con el filtro del informe metodológico {-}
 
-La función `filter_standard_cev` nos permite transformar o filtrar nuestra
-información. Por ejemplo, las víctimas que se documentaron como víctimas 
-de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a ser víctimas de 
-otras guerrillas, ya que este primer grupo oficialmente dejó de existir después 
-de dicho año (`perp_change` = TRUE). Adicionalmente nos genera columnas 
-adicionales como quinquenio, más categorías de edades, etc.^[Adicionalmente, 
+Siguiendo lo anterior, la función `filter_standard_cev` nos permite transformar o
+filtrar nuestra información. Por ejemplo, las víctimas que se documentaron como
+víctimas de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a ser 
+víctimas de otras guerrillas, ya que este primer grupo oficialmente dejó de 
+existir después de dicho año (`perp_change` = TRUE). Adicionalmente nos genera 
+columnas adicionales como quinquenio, más categorías de edades, etc.^[Además, 
 por cuestión de análisis se filtró por otras variables como `p_str` en el que 
 quitamos la categoría `!= "OTRO"`.].
 
@@ -175,7 +174,7 @@ Usaremos pues la función `summary_observed` para calcular dicha documentación.
 
 Como se puede ver, los argumentos de la función son: 1) la violación a analizar;
 2) los datos **replicas_filtradas**; 3) **strata_vars**, que para este ejemplo 
-será la variable de **macroregion**; 4) le sigue el argumento de **conflict_filter** 
+será la variable de **macrorregion**; 4) le sigue el argumento de **conflict_filter** 
 que filtra a aquellas personas que fueron víctimas dentro del marco del conflicto
 armado (variable `is_conflict` == TRUE) o no (variable `is_conflict` == FALSE).
 
@@ -217,27 +216,26 @@ graph <- ggplot(tabla_documentada,
         legend.position = c(0.7, 0.7)) +
   theme(axis.text.x = element_text(angle = 50, hjust = 1, face = "bold")) +
   theme(legend.position = "top") +
-  labs(x = "Macroregiones de la CEV",
+  labs(x = "macrorregiones de la CEV",
        y = "Número de víctimas documentadas",
        fill = "") +
   scale_fill_manual(values = c("Observado" = "#2F2F2F"))
-
 
 graph
 
 ```
 Entonces, lo primero que podemos evidenciar es estas son las víctimas que fueron
 documentadas dentro del marco del conflicto armado, es decir, excluimos aquellas 
-víctimas no relacionadas y también a aquellas en las que existía ambiguedad de 
+víctimas no relacionadas y también a aquellas en las que existía ambigüedad de 
 si hacían parte o no de dicho fenómeno (es decir, que presentan campos faltantes),
-por lo que en el siguiente [ejemplo](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Imputacion/output/secuestro-macroregion-imputado.html) veremos que estas fueron objeto de la imputación
+por lo que en el siguiente [ejemplo](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Imputacion/output/secuestro-macrorregion-imputado.html) veremos que estas fueron objeto de la imputación
 estadística múltiple y que por ende estas víctimas "pasaron" a ser parte de una
-de las dos categorías de "pertenece al conflicto", ya que nuestra variable de 
-macroregion no presenta campos faltantes). Seguido de esto vemos que 
-`r myNum(tabla_documentada$observed[1])` personas fueron víctimas 
-en la macroregion de `r myNum(tabla_documentada$macroregion[1])` 
-mientras que `r myNum(tabla_documentada$observed[2])`
-fueron víctimas en la macroregion de `r myNum(tabla_documentada$macroregion[2])`
+de las dos categorías de "pertenece al conflicto" (ya que nuestra variable de 
+macrorregion no presenta campos faltantes). Seguido de esto vemos que 
+`r myNum(tabla_documentada$observed[2])` personas fueron víctimas 
+en la macrorregion de `r myNum(tabla_documentada$macroregion[2])` 
+mientras que `r myNum(tabla_documentada$observed[4])` fueron víctimas en la
+macrorregion de `r myNum(tabla_documentada$macroregion[4])`
 
 Por último, guardamos los resultados (en formato *.parquet*) en una carpeta 
 denominada "output-documentados", ya que esta tabla nos servirá como insumo para el 
@@ -247,6 +245,6 @@ cálculo de la combinación de las imputaciones acorde con las reglas de
 ```{r save-observed, echo = TRUE}
 
 arrow::write_parquet(tabla_documentada,
-                     here::here("Resultados-CEV/Documentados/output-documentados/secuestro-macroregion-documentado.parquet"))
+                     here::here("Resultados-CEV/Documentados/output-documentados/secuestro-macrorregion-documentado.parquet"))
 
 ```

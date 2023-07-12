@@ -87,9 +87,9 @@ retorna un objeto (data frame) si el contenido es igual, y el mensaje
 _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue 
 previamente alterado/modificado, lo que quiere decir que los análisis que el 
 usuario realice serán inconsistentes y llevarán a resultados erróneos. Este 
-último error significa que nos datos no se han leído a R. Si por alguna 
+último error significa que los datos no se han leído a R. Si por alguna 
 razón usted quiere leer dicha información a pesar de saber que no son los mismos 
-datos originamente publicados, puede cambiar el argumento `crash` a FALSE, y, 
+datos originalmente publicados, puede cambiar el argumento `crash` a FALSE, y, 
 en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia. 
 
 Así, en este ejemplo trabajaremos las réplicas 1 a la 10. Usted puede trabajar con 
@@ -120,7 +120,7 @@ procederemos a transformar y/o filtrar algunas variables.
 
 ## Filtrando las réplicas acorde con el filtro del anexo metodológico {-}
 
-Siguiendo lo anteruor, la función `filter_standard_cev` nos permite transformar
+Siguiendo lo anterior, la función `filter_standard_cev` nos permite transformar
 o filtrar nuestra información. Por ejemplo, las víctimas que se documentaron 
 como víctimas de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a 
 ser víctimas de otras guerrillas, ya que este primer grupo oficialmente dejó de

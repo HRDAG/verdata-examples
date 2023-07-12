@@ -58,13 +58,13 @@ figura 3 de la página 13 (inf-der) del [anexo metodológico del proyecto](https
 Se comienza autenticando e importando la base de datos, esto a 
 través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
 `read_replicates`. La autenticación de los datos es pertinente dado que estos 
-fueron publicados con la licencia de atribución 4.0 internacional de Creative 
-Commons (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
-información. Considerando que usted pudo haber llegado a estos datos por medio 
+fueron publicados con la licencia de atribución 4.0 internacional de *Creative 
+Commons* (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
+información y, considerando que usted pudo haber llegado a estos datos por medio 
 de diferentes fuentes, es importante que sepa si han sido modificados o no, para 
 lo que puede hacer uso de estas dos funciones. 
 
-La función `confirm_files` autentica los archivos que han sido descargados. 
+Así, la función `confirm_files` autentica los archivos que han sido descargados. 
 Considerando que cada violación tiene hasta 100 réplicas, esta función permite
 autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en 
 caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
@@ -82,21 +82,21 @@ verdata::confirm_files(here::here("verdata-parquet/secuestro"),
 Además, la función `read_replicates` permite 2 cosas: leer las réplicas a R en
 una sola tabla (ya sea a partir de un formato *csv* o *parquet*) y verificar 
 que el contenido de las réplicas sea exactamente igual al publicado.
-Cuando el argumento `crash` tiene su valor por default (TRUE), la función 
+Cuando el argumento `crash` tiene su valor por *default* (TRUE), la función 
 retorna un objeto (data frame) si el contenido es igual, y el mensaje
 _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue 
-previamente alterado/modificada, lo que quiere decir que los análisis que el 
-usuario realice hacer serán inconsistentes y llevarán a resultados erróneos. 
-Este último error significa que nos datos no se han leído a R. Si por alguna 
-razón, usted quiere leer los datos a pesar de saber que no son los mismos datos 
-originamente publicados, puede cambiar el argumento `crash` a FALSE, y, 
+previamente alterado/modificado, lo que quiere decir que los análisis que el 
+usuario realice serán inconsistentes y llevarán a resultados erróneos. Este 
+último error significa que los datos no se han leído a R. Si por alguna 
+razón usted quiere leer dicha información a pesar de saber que no son los mismos 
+datos originalmente publicados, puede cambiar el argumento `crash` a FALSE, y, 
 en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia. 
 
-En este ejemplo trabajaremos las réplicas 1 a la 10. Usted puede trabajar con 
-las réplicas que desee de acuerdo con los análisis que desee realizar.
-Además, como se ha mencionado, esta información documentada se refiere a las 
+Así, en este ejemplo trabajaremos las réplicas 1 a la 10. Usted puede trabajar con 
+las réplicas que desee de acuerdo con los análisis que desee realizar, ya que, 
+como se ha mencionado, esta información documentada se refiere a las 
 víctimas que fueron registradas originalmente en las bases (y en el que algunos 
-registros contienen campos faltantes). Es decir, contrario a los ejemplos de 
+registros contienen campos faltantes), es decir, contrario a los ejemplos de 
 imputación, esta documentación no cambia para ninguna réplica, por lo que si 
 usted quiere obtener lo que las fuentes documentaron o registraron, puede optar 
 por diferentes números de réplica y no solamente las 10 primeras que se usaron 
@@ -114,10 +114,9 @@ paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 Vemos que tenemos `r myNum(nrow(replicas_datos))` registros, nuestras réplicas 
 van desde la número 1 hasta la 10. Además, nuestros datos tienen información 
 sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
-el año del hecho, la pertenencia étnica, entre otros. 
-Sin embargo, para centrarnos en un análisis más específico, tal como el realizado
-para el informe metodológico, procederemos a transformar y/o filtrar 
-algunas variables. 
+el año del hecho, la pertenencia étnica, entre otros. Sin embargo, para centrarnos
+en un análisis más específico, tal como el realizado para el informe metodológico,
+procederemos a transformar y/o filtrar algunas variables. 
 
 ## Filtrando las réplicas acorde con el filtro del informe metodológico {-}
 
@@ -184,6 +183,9 @@ tabla_documentada <- verdata::summary_observed("secuestro",
 paged_table(tabla_documentada, options = list(rows.print = 4, cols.print = 4))
 
 ```
+
+Procederemos a generar una nueva variable con el nombre de los departamentos y a 
+escoger los 10 primeros acorde con la documentación (por razones gráficas):
 
 ```{r name-depto, echo = TRUE}
 
@@ -256,11 +258,11 @@ graph
 ```
 Entonces, lo primero que podemos evidenciar es estas son las víctimas que fueron
 documentadas dentro del marco del conflicto armado, es decir, excluimos aquellas 
-víctimas no relacionadas y también a aquellas en las que existía ambiguedad de 
+víctimas no relacionadas y también a aquellas en las que existía ambigüedad de 
 si hacían parte o no de dicho fenómeno (es decir, que presentan campos faltantes),
 por lo que en el siguiente [ejemplo](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Imputacion/output/secuestro-departamento-imputado.html) veremos que estas fueron objeto de la imputación
 estadística múltiple y que por ende estas víctimas "pasaron" a ser parte de una
-de las dos categorías de "pertenece al conflicto", ya que nuestra variable de 
+de las dos categorías de "pertenece al conflicto" (ya que nuestra variable de 
 departamento no presenta campos faltantes). Seguido de esto vemos que 
 `r myNum(diez_primeros_departamentos$observed[1])` personas fueron víctimas 
 en el departamento de `r myNum(diez_primeros_departamentos$dept_name[1])` mientras que `r myNum(diez_primeros_departamentos$observed[2])`
