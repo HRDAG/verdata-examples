@@ -167,11 +167,10 @@ fue desaparecida de forma "forzada" (`forced_dis` == TRUE) o no (`forced_dis` ==
 Para otras violaciones este argumento siempre será "FALSE". 
 
 También contamos con otros argumentos: 6) **edad_minors_filter** que filtra por 
-víctimas menores de edad (`edad_minors_filter` == TRUE); 7) **include_props** 
+víctimas menores de edad (`edad_minors_filter` == TRUE) y 7) **include_props** 
 que permite incluir el cálculo de las proporciones para nuestras variables de 
-interés (`include_props` == TRUE); y 8) **digits** que es un argumento opcional 
-con el cual se puede establecer el número de dígitos para redondear los 
-resultados (que por defecto es 2).
+interés (`include_props` == TRUE). Cabe aclarar que el número de digitos por
+defecto es = 2.
 
 ```{r combine-replicates, echo = TRUE}
 
