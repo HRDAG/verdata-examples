@@ -187,7 +187,7 @@ sabemos son menores de edad, es decir, acá excluímos víctimas mayores de 18 a
 y también a aquellas de las que no sabemos si son o no menores de dicha edad, por
 lo que en el siguiente [ejemplo](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Imputacion/output/reclutamiento-is_conflict-imputado.html) veremos que estas fueron objeto de la imputación
 estadística múltiple y que por ende estas víctimas "pasaron" a ser parte de una 
-de las categorías de esta variable.
+de las categorías de esta variable de "is_conflict".
 
 Por último, guardamos los resultados (en formato *.parquet*) en una carpeta 
 denominada "output-documentados", ya que esta tabla nos servirá como insumo para el 

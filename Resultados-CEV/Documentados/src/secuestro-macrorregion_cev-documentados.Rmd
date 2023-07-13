@@ -75,7 +75,7 @@ funciones del paquete `verdata`: las funciones `confirm_files` y
 `read_replicates`. La autenticación de los datos es pertinente dado que estos 
 fueron publicados con la licencia de atribución 4.0 internacional de *Creative Commons* 
 (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
-informació y, considerando que usted pudo haber llegado a estos datos por medio 
+información y, considerando que usted pudo haber llegado a estos datos por medio 
 de diferentes fuentes, es importante que sepa si han sido modificados o no, para 
 lo que puede hacer uso de estas dos funciones. 
 

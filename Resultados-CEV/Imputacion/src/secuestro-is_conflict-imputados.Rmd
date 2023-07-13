@@ -56,8 +56,8 @@ la presente violación. Específicamente, se replicará la tabla 4 de la página
 Se comienza autenticando e importando la base de datos, esto a 
 través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
 `read_replicates`. La autenticación de los datos es pertinente dado que estos 
-fueron publicados con la licencia de atribución 4.0 internacional de Creative 
-Commons (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
+fueron publicados con la licencia de atribución 4.0 internacional de *Creative* 
+*Commons* (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
 información. Considerando que usted pudo haber llegado a estos datos por medio 
 de diferentes fuentes, es importante que sepa si han sido modificados o no, para 
 lo que puede hacer uso de estas dos funciones. 
@@ -66,9 +66,9 @@ La función `confirm_files` autentica los archivos que han sido descargados.
 Considerando que cada violación tiene hasta 100 réplicas, esta función permite
 autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en 
 caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
-realizar su análisis con todas las réplicas. Esta función devolvera el mensaje 
+realizar su análisis con todas las réplicas. Esta función devolverá el mensaje 
 _"You have the right file!"_ si los archivos son iguales a los publicados, o 
-el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ si no lo son. 
+el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ en caso contrario. 
 
 ```{r confirm-replicates, eval=FALSE}
 
@@ -80,15 +80,15 @@ verdata::confirm_files(here::here("verdata-parquet/secuestro"),
 Además, la función `read_replicates` permite 2 cosas: leer las réplicas a R en
 una sola tabla (ya sea a partir de un formato *csv* o *parquet*) y verificar 
 que el contenido de las réplicas sea exactamente igual al publicado.
-Cuando el argumento `crash` tiene su valor por default (TRUE), la función 
-retorna un objeto (data frame) si el contenido es igual, y el mensaje
+Cuando el argumento `crash` tiene su valor por *default* (TRUE), la función 
+retorna un objeto (*data frame*) si el contenido es igual, y el mensaje
 _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue 
-previamente alterado/modificada, lo que quiere decir que los análisis que el 
-usuario realice hacer serán inconsistentes y llevarán a resultados erróneos. 
+previamente alterado/modificado, lo que quiere decir que los análisis que el 
+usuario realice serán inconsistentes y llevarán a resultados erróneos. 
 Este último error significa que nos datos no se han leído a R. Si por alguna 
 razón, usted quiere leer los datos a pesar de saber que no son los mismos datos 
-originamente publicados, puede cambiar el argumento `crash` a FALSE, y, 
-en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia. 
+originalmente publicados, puede cambiar el argumento `crash` a FALSE, y, 
+en ese caso, podrá ver dicha información junto con el mismo mensaje de advertencia. 
 
 ```{r open-replicates, echo = TRUE}
 
@@ -103,16 +103,16 @@ Vemos que tenemos `r myNum(nrow(replicas_datos))` registros, nuestras réplicas
 van desde la número 1 hasta la 10. Además, nuestros datos tienen información 
 sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
 el año del hecho, la pertenencia étnica, entre otros. 
-Sin embargo, para centrarnos en un análisis más específico, como el del informe
-metodológico, procederemos a transformar y/o filtrar algunas variables. 
+Sin embargo, para centrarnos en un análisis más específico, como el del anexo
+metodológico, procederemos a crear, transformar y/o filtrar algunas variables. 
 
-## Filtrando las réplicas acorde con el filtro del informe metodológico {-}
+## Filtrando las réplicas acorde con el filtro del anexo metodológico {-}
 
-La función `filter_standard_cev` nos permite transformar o filtrar la
+La función `filter_standard_cev` nos permite crear, transformar y/o filtrar la
 información. Por ejemplo, aquellas víctimas que se documentaron como víctimas 
 de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a ser víctimas de 
 otras guerrillas, ya que este primer grupo oficialmente dejó de existir después 
-de dicho año (`perp_change` = TRUE)
+de dicho año (`perp_change` = TRUE).
 
 ```{r filter-cev, echo = TRUE}
 
@@ -149,7 +149,7 @@ función se siguieron las reglas de combinación de Rubin, que, si desea estudia
 más detalle de qué se trata, el libro [Flexible Imputation of Missing Data de Stef van Buuren](https://stefvanbuuren.name/fimd/) aborda paso a paso este proceso. 
 
 Ahora, esta función se compone de los siguientes argumentos: la violación a 
-analizar; 2) **tabla_documentada**, es decir, el data frame 
+analizar; 2) **tabla_documentada**, es decir, el *data frame* 
 derivado de la función `summary_observed`; 3) la base de datos 
 filtrada **replicas_filtradas**; 4) **strata_vars** que será nuevamente nuestra 
 variable de interés; 5) **conflict_filter** que filtra a aquellas personas
@@ -157,7 +157,7 @@ que fueron víctimas dentro del marco del conflicto armado (variable `is_conflic
 == TRUE) o no (variable `is_conflict` == FALSE). 
 
 Esta función también incluye un argumento denominado 5) **forced_dis_filter** que 
-cual aplica únicamente a la violación de desaparición. Esta indica si la víctima
+aplica únicamente a la violación de desaparición. Esta indica si la víctima
 fue desaparecida de forma "forzada" (`forced_dis` == TRUE) o no (`forced_dis` == FALSE). 
 Para otras violaciones este argumento siempre será "FALSE". 
 
@@ -182,15 +182,11 @@ paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
 
 ```
 Entonces, en primera instancia vemos una tabla que nos muestra la distribución 
-de víctimas documentadas de acuerdo con su relación con el conflicto armado. Y como 
-se indicó en el ejemplo anterior, en esta columna excluímos víctimas no vinculadas
-al conflicto y víctimas que tenían campos faltantes allí. Estas últimas fueron 
-objeto de la imputación estadística múltiple y por tal razón vemos que en 
-la columna **imp_mean** hay una mayor cantidad de personas, ya que estas
-`r myNum(tabla_combinada$observed[3])` se imputaron y por ende estas víctimas 
-"pasaron" a algunas de las categorías de nuestro interés; Es decir, recordemos 
-que estas nuevas columnas incluyen todas las víctimas, independientemente si 
-pasaron por un proceso de imputación o no.
+de víctimas documentadas de acuerdo con su relación con el conflicto armado. Estas 
+`r myNum(tabla_combinada$observed[3])` se imputaron y por ende dichas personas 
+"pasaron" a algunas de las dos categorías de nuestro interés y que se representan en
+**imp_mean**. Es decir, recordemos que estas nuevas columnas incluyen todas las
+víctimas, independientemente si pasaron por un proceso de imputación o no.
 
 Así, después del proceso de imputación estadística y con un con un nivel de 
 confianza del 95% se evidencia que hubo entre `r myNum(tabla_combinada$imp_lo[1])` a
