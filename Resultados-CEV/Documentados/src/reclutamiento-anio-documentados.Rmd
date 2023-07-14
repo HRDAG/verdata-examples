@@ -104,7 +104,7 @@ en la Comisión de la Verdad.
 ```{r open-replicates, echo = TRUE}
 
 replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/reclutamiento"),
-                                           "reclutamiento", 1, 10)
+                                           "reclutamiento", 1, 2)
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 

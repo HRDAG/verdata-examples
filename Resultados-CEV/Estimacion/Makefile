@@ -19,7 +19,7 @@ all: \
 	output/desaparicion-edad_c-estratificacion.html	\
 	output/desaparicion-etnia-estratificacion.html	\
 	output/desaparicion-departamento-estratificacion.html	\
-	output/desaparicion-macroregion_cev-estratificacion.html \
+	output/desaparicion-macrorregion_cev-estratificacion.html \
 	output/desaparicion-perpetrador-estratificacion.html
 	
 clean:
@@ -73,11 +73,11 @@ output/desaparicion-departamento-estratificacion.html: \
 		Rscript -e "rmarkdown::render('$<')"
 				mv src/desaparicion-departamento-estratificacion.html output/
 
-output/desaparicion-macroregion_cev-estratificacion.html: \
-		src/desaparicion-macroregion_cev-estratificacion.Rmd
+output/desaparicion-macrorregion_cev-estratificacion.html: \
+		src/desaparicion-macrorregion_cev-estratificacion.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-				mv src/desaparicion-macroregion_cev-estratificacion.html output/
+				mv src/desaparicion-macrorregion_cev-estratificacion.html output/
 
 output/desaparicion-perpetrador-estratificacion.html: \
 		src/desaparicion-perpetrador-estratificacion.Rmd

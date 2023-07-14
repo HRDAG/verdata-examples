@@ -53,12 +53,12 @@ proceso de estimación del total de víctimas vinculadas al conflicto armado (19
 
 ## Autenticando e importando la base de datos (réplicas) {-}
 
-Se comienza autenticando e importando la base de datos, esto a 
+Se comienza autenticando e importando la base de datos de desaparición, esto a 
 través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
 `read_replicates`. La autenticación de los datos es pertinente dado que estos 
-fueron publicados con la licencia de atribución 4.0 internacional de Creative 
-Commons (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
-información. Considerando que usted pudo haber llegado a estos datos por medio 
+fueron publicados con la licencia de atribución 4.0 internacional de *Creative* 
+*Commons* (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
+información y, considerando que usted pudo haber llegado a estos datos por medio 
 de diferentes fuentes, es importante que sepa si han sido modificados o no, para 
 lo que puede hacer uso de estas dos funciones. 
 
@@ -68,7 +68,7 @@ autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en
 caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
 realizar su análisis con todas las réplicas. Esta función devolvera el mensaje 
 _"You have the right file!"_ si los archivos son iguales a los publicados, o 
-el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ si no lo son. 
+el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ en caso contrario. 
 
 ```{r confirm-replicates, eval=FALSE}
 
@@ -80,15 +80,15 @@ verdata::confirm_files(here::here("verdata-parquet/desaparicion"),
 Además, la función `read_replicates` permite 2 cosas: leer las réplicas a R en
 una sola tabla (ya sea a partir de un formato *csv* o *parquet*) y verificar 
 que el contenido de las réplicas sea exactamente igual al publicado.
-Cuando el argumento `crash` tiene su valor por default (TRUE), la función 
-retorna un objeto (data frame) si el contenido es igual, y el mensaje
+Cuando el argumento `crash` tiene su valor por *default* (TRUE), la función 
+retorna un objeto (*data frame*) si el contenido es igual, y el mensaje
 _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue 
-previamente alterado/modificada, lo que quiere decir que los análisis que el 
-usuario realice hacer serán inconsistentes y llevarán a resultados erróneos. 
+previamente alterado/modificado, lo que quiere decir que los análisis que el 
+usuario realice serán inconsistentes y llevarán a resultados erróneos. 
 Este último error significa que nos datos no se han leído a R. Si por alguna 
-razón, usted quiere leer los datos a pesar de saber que no son los mismos datos 
-originamente publicados, puede cambiar el argumento `crash` a FALSE, y, 
-en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia. 
+razón, usted quiere leer dicha información a pesar de saber que no son los mismos datos 
+originalmente publicados, puede cambiar el argumento `crash` a FALSE, y, 
+en ese caso, podrá ver los datos junto con el mismo mensaje de advertencia. 
 
 ```{r open-replicates, echo = TRUE}
 
@@ -106,13 +106,15 @@ el año del hecho, la pertenencia étnica, las fuentes de información, entre ot
 
 ## Proceso estratificación para estimaciones {-}
 
-Ahora bien, con el fin de controlar la heterogeneidad  en las probabilidades de captura 
-(ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se estratifica la información de acuerdo con el análisis a realizar. En este caso, 
-como queremos estimar el subregistro de la presente violación para aquellas víctimas
-vinculadas al conflict armado, se estratificará por año del hecho y la variable de 
-"es desaparición forzada" (tal como en el ejemplo completo para estimaciones por 
-año). Sin embargo, es necesario filtrar primero por las variables de "pertenece 
-al conflicto" `is_conflict` y la anteriormente mencionada `is_forced_dis`.
+Ahora bien, con el fin de controlar la heterogeneidad en las probabilidades de captura 
+(ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) 
+se estratifica la información de acuerdo con el análisis a realizar. En este caso, 
+como queremos estimar el subregistro de la presente violación para el total de
+víctimas vinculadas al conflicto armado, se estratificará por año del hecho y 
+la variable de "es desaparición forzada" (tal como en el ejemplo completo para 
+estimaciones por año). Sin embargo, es necesario filtrar primero por las 
+variables de "pertenece al conflicto" `is_conflict` y la anteriormente mencionada
+`is_forced_dis`.
 
 ```{r estratificacion, echo = TRUE}
 
@@ -158,7 +160,7 @@ stratify <- function(replicate_data, schema) {
 Entonces, en primera instancia creamos una función que necesita de dos 
 argumentos:
 
--  El argumento **replicate_data** se refiere a un data frame a estratificar,
+-  El argumento **replicate_data** se refiere a un *data frame* a estratificar,
 que en nuestro caso es **replicas_estratos**, es decir, la información previamente 
 filtrada.
 
@@ -192,15 +194,15 @@ que en este ejemplo queremos estimar el número de víctimas de la presente viol
 por la(s) variable(s) nombrada(s), la estratificación se hace por la variable 
 **yy_hecho** e **is_forced_dis** para cada réplica. El objeto 
 **schema** contiene una cadena de caracteres con los nombres de las variables en 
-el data frame. Luego, como se mencionó, usamos la tabla **replicas_estratos**
+el *data frame*. Luego, como se mencionó, usamos la tabla **replicas_estratos**
 como primer argumento y el objeto **schema** como segundo. Lo que obtenemos es
 lo siguiente:
 
 El objeto **listas** contiene dos listas. La primera, llamada **strata_data** que
 contiene las víctimas que fueron víctimas de este hecho según sus característica
 para cada una de las réplicas. Por ejemplo, el elemento 1 de la lista contiene
-las personas que fueron desaparecidas de forma forzada en el año de 1985
-presentes en la réplica 1 (ver el objeto **victimas_estrato**):
+las personas que fueron desaparecidas de forma forzada (vinculadas al conflicto
+armado) en el año de 1985 presentes en la réplica 1 (ver el objeto **victimas_estrato**):
 
 ```{r stratify-continuacion2, echo = TRUE}
 
@@ -229,17 +231,13 @@ victimas_estrato_nombre <- nombres[[1]]
 paged_table(victimas_estrato_nombre, options = list(rows.print = 10, cols.print = 5))
 
 ```
-
 Teniendo esta estratificación procederemos a guardar el objeto `listas` 
 en nuestra maquina local (con la función `saveRDS`) para usarlo en nuestro 
-próximo ejemplo sobre estimación por sistemas múltiples (ESM) y la posterior
-combinación de estas:
+próximo ejemplo sobre el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/desaparicion-is_conflict-estimacion.html).
 
 ```{r save-estratify, echo = TRUE}
 
 saveRDS(listas, 
-        here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-is_conflict-desaparicion.rds"))
+        here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-is_forced_dis-is_conflict-desaparicion.rds"))
 
 ```
-
-El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/desaparicion-is_conflict-estimacion.html).

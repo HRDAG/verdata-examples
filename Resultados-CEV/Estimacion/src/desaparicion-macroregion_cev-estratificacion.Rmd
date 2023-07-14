@@ -1,6 +1,6 @@
 ---
 title: "Proceso de estratificación"
-subtitle: "Desapariciones forzadas desagregadas por macroregiones de la CEV - 1985–2016"
+subtitle: "Desapariciones forzadas desagregadas por macrorregiones de la CEV - 1985–2016"
 output:
   rmdformats::robobook:
     code_folding: show
@@ -50,9 +50,10 @@ antes de continuar.
 
 En este ejemplo, se ilustrará el proceso de estratificación para el posterior
 proceso de estimación del total de víctimas por macroregion de la CEV (1985–2016). 
-Para esto necesitaremos un insumo adicional que serán las macroregiones que se 
-generaron en la Comisión de la Verdad (CEV). Procederemos a importar dicho insumo 
-que se se encuentra en la carpeta "Recursos" a partir del paquete `readr`:
+Para esto necesitaremos un insumo adicional que serán las [macrorregiones](https://web.comisiondelaverdad.co/actualidad/noticias/comision-de-la-verdad-inicia-el-despliegue-exploratorio-en-macroregiones#:~:text=Las%20nueve%20macrorregiones%20definidas%20son,Magdalena%2C%20Sucre%20y%20San%20Andr%C3%A9s.) 
+que se crearon en la Comisión de la Verdad (CEV). Así, procederemos a importar 
+dicho insumo que se encuentra en la carpeta "Recursos" (usando el paquete `readr`) 
+y realizando otras operaciones hechas para obtener los resultados por dicha variable:
 
 ```{r macroregion, include=TRUE}
 
@@ -73,9 +74,9 @@ paged_table(macro_regiones, options = list(rows.print = 10, cols.print = 5))
 Después de esto pasaremos a autenticar e importar la base de datos, esto a 
 través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
 `read_replicates`. La autenticación de los datos es pertinente dado que estos 
-fueron publicados con la licencia de atribución 4.0 internacional de Creative 
-Commons (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
-información. Considerando que usted pudo haber llegado a estos datos por medio 
+fueron publicados con la licencia de atribución 4.0 internacional de *Creative* 
+*Commons* (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
+información y, considerando que usted pudo haber llegado a estos datos por medio 
 de diferentes fuentes, es importante que sepa si han sido modificados o no, para 
 lo que puede hacer uso de estas dos funciones. 
 
@@ -85,7 +86,7 @@ autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en
 caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
 realizar su análisis con todas las réplicas. Esta función devolvera el mensaje 
 _"You have the right file!"_ si los archivos son iguales a los publicados, o 
-el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ si no lo son. 
+el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ en caso contrario. 
 
 ```{r confirm-replicates, eval=FALSE}
 
@@ -97,15 +98,15 @@ verdata::confirm_files(here::here("verdata-parquet/desaparicion"),
 Además, la función `read_replicates` permite 2 cosas: leer las réplicas a R en
 una sola tabla (ya sea a partir de un formato *csv* o *parquet*) y verificar 
 que el contenido de las réplicas sea exactamente igual al publicado.
-Cuando el argumento `crash` tiene su valor por default (TRUE), la función 
-retorna un objeto (data frame) si el contenido es igual, y el mensaje
+Cuando el argumento `crash` tiene su valor por *default* (TRUE), la función 
+retorna un objeto (*data frame*) si el contenido es igual, y el mensaje
 _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_ si el contenido de la base fue 
-previamente alterado/modificada, lo que quiere decir que los análisis que el 
-usuario realice hacer serán inconsistentes y llevarán a resultados erróneos. 
+previamente alterado/modificado, lo que quiere decir que los análisis que el 
+usuario realice serán inconsistentes y llevarán a resultados erróneos. 
 Este último error significa que nos datos no se han leído a R. Si por alguna 
-razón, usted quiere leer los datos a pesar de saber que no son los mismos datos 
-originamente publicados, puede cambiar el argumento `crash` a FALSE, y, 
-en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia. 
+razón, usted quiere leer dicha información a pesar de saber que no son los mismos datos 
+originalmente publicados, puede cambiar el argumento `crash` a FALSE, y, 
+en ese caso, podrá ver los datos junto con el mismo mensaje de advertencia. 
 
 ```{r open-replicates, echo = TRUE}
 
@@ -121,14 +122,14 @@ van desde la número 1 hasta la 10. Además, nuestros datos tienen información
 sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
 el año del hecho, la pertenencia étnica, las fuentes de información, entre otros. 
 
-## Filtrando las réplicas acorde con el filtro del informe metodológico {-}
+## Filtrando las réplicas acorde con el filtro del anexo metodológico {-}
 
 Antes de comenzar a estratificar debemos generar algunas variables adicionales. 
 La función `filter_standard_cev` nos permite obtener dicha información (tal como 
 la creación de una nueva categoría de tiempo). En este sentido los argumentos de 
 la misma son: los datos anteriormente importados, la violación a analizar y 
 un argumento que, si es igual a TRUE, aquellas víctimas que se documentaron 
-como víctimas de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a 
+como víctimas de la ex-guerrilla FARC-EP en años posteriores a 2016 pasarán a 
 ser víctimas de otras guerrillas, ya que este primer grupo oficialmente dejó de 
 existir después de dicho año (`perp_change` = TRUE). Sin embargo, como la 
 temporalidad de este hecho llega hasta dicho año no tendría sentido aplicar este 
@@ -149,12 +150,11 @@ paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
 
 ## Proceso estratificación para estimaciones {-}
 
-Ahora bien, con el fin de controlar la heterogeneidad  en las probabilidades de captura 
-(ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se estratifica la información de acuerdo con el análisis a realizar. En este caso, 
-como queremos estimar el subregistro de la presente violación por macroregion,
-se estratificará por quinquenio y dicha variable. Sin embargo, es necesario filtrar
-primero por las variables de "pertenece al conflicto" `is_conflict` y la 
-anteriormente mencionada `is_forced_dis`.
+Ahora bien, con el fin de controlar la heterogeneidad en las probabilidades de captura 
+(ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se estratifica la información de acuerdo con el análisis a realizar. En este caso, como queremos estimar el subregistro de la 
+presente violación por macrorregion, se estratificará por quinquenio y dicha 
+variable. Sin embargo, es necesario filtrar primero por las variables de 
+"pertenece al conflicto" `is_conflict` y la anteriormente mencionada `is_forced_dis`.
 
 ```{r estratificacion, echo = TRUE}
 
@@ -200,7 +200,7 @@ stratify <- function(replicate_data, schema) {
 Entonces, en primera instancia creamos una función que necesita de dos 
 argumentos:
 
--  El argumento **replicate_data** se refiere a un data frame a estratificar,
+-  El argumento **replicate_data** se refiere a un *data frame* a estratificar,
 que en nuestro caso es **replicas_estratos**.
 
 - El segundo argumento son las variables de estratificación (**schema**). 
@@ -232,14 +232,14 @@ El paso anterior muestra la forma en la que aplicamos la función. Considerando
 que en este ejemplo queremos estimar el número de víctimas de la presente violación
 por la(s) variable(s) nombrada(s), la estratificación se hace por la variable 
 **quinquenio** y **macroregion** para cada réplica. El objeto **schema** contiene 
-una cadena de caracteres con los nombres de las variables en el data frame. 
+una cadena de caracteres con los nombres de las variables en el *data frame*. 
 Luego, como se mencionó, usamos la tabla **replicas_estratos** como primer 
 argumento y el objeto **schema** como segundo. Lo que obtenemos es lo siguiente:
 
 El objeto **listas** contiene dos listas. La primera, llamada **strata_data** que
 contiene las víctimas que fueron víctimas de este hecho según sus característica
 para cada una de las réplicas. Por ejemplo, el elemento 25 de la lista contiene
-las víctimas de la macroregion Centro-Andina que fueron desaparecidas de forma 
+las víctimas de la macrorregion Centro-Andina que fueron desaparecidas de forma 
 forzada en el quinquenio de 1995 a 1999 presentes en la réplica 1 (ver el objeto 
 **victimas_estrato**):
 
@@ -255,7 +255,7 @@ paged_table(victimas_estrato, options = list(rows.print = 10, cols.print = 5))
 La segunda lista, llamada **stratification_vars**, contiene el nombre de cada 
 estrato. Siguiendo el mismo ejemplo, el elemento 25 de **stratification_vars** 
 contiene una columna con la respectiva réplica, una columna con la variable de
-tiempo y la macroregion. Nuevamente, este solo es un ejemplo de nuestra forma 
+tiempo y la macrorregion. Nuevamente, este solo es un ejemplo de nuestra forma 
 de estratificar, usted puede hacerlo de otra manera. La idea principal es agrupar
 las víctimas por las variables del estrato y las réplicas que esté usando.
 
@@ -271,14 +271,11 @@ paged_table(victimas_estrato_nombre, options = list(rows.print = 10, cols.print 
 
 Teniendo esta estratificación procederemos a guardar el objeto `listas` 
 en nuestra maquina local (con la función `saveRDS`) para usarlo en nuestro 
-próximo ejemplo sobre estimación por sistemas múltiples (ESM) y la posterior
-combinación de estas:
+próximo ejemplo sobre el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/desaparicion-macrorregion-estimacion.html).
 
 ```{r save-estratify, echo = TRUE}
 
 saveRDS(listas, 
-        here::here("Resultados-CEV/Estimacion/output-estimacion/quinquenio-macroregion-desaparicion.rds"))
+        here::here("Resultados-CEV/Estimacion/output-estimacion/quinquenio-macrorregion-desaparicion.rds"))
 
 ```
-
-El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/desaparicion-macroregion-estimacion.html).

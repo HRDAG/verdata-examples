@@ -102,7 +102,7 @@ forma^[Puede obtener más información de la función de `mse` escribiendo en la
 consola de R: ?mse.]
 
 - `stratum_data`: Data frame que incluye la información del estrato de interés 
-(data frames que creamos antes).
+(*data frame*s que creamos antes).
 
 - `stratum_name`: Es el nombre del estrato.
 
@@ -116,12 +116,12 @@ estimaciones_dir <- here::here("estimaciones")
 
 ```
 
-Al final el resultado será un data frame con cinco columnas: una columna 
+Al final el resultado será un *data frame* con cinco columnas: una columna 
 que indica si el estrato es válido o no (`TRUE` o `FALSE`); el número de muestras
 `N` de la distribución posterior (`NA` si el estrato no es válido); las fuentes
 válidas que se usaron en la estimación `valid_sources`; el número de observaciones
 de las listas que son válidas del estrato (`n_obs`) y el nombre del estrato 
-`stratum_name`. Si un estrato es estimable, este data frame va a contener 1000
+`stratum_name`. Si un estrato es estimable, este *data frame* va a contener 1000
 muestras para cada estrato.
 
 Antes de esto es importante aclarar que este proceso se hará a través de una 
