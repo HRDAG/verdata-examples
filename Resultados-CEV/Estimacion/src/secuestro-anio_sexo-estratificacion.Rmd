@@ -67,7 +67,7 @@ La función `confirm_files` autentica los archivos que han sido descargados.
 Considerando que cada violación tiene hasta 100 réplicas, esta función permite
 autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en 
 caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
-realizar su análisis con todas las réplicas. Esta función devolvera el mensaje 
+realizar su análisis con todas las réplicas. Esta función devolverá el mensaje 
 _"You have the right file!"_ si los archivos son iguales a los publicados, o 
 el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ en caso contrario. 
 
@@ -127,6 +127,15 @@ replicas_estratos <- verdata::filter_standard_cev(replicas_datos,
 paged_table(replicas_estratos, options = list(rows.print = 10, cols.print = 5))
 
 ```
+
+## Proceso estratificación para estimaciones {-}
+
+Ahora bien, con el fin de controlar la heterogeneidad en las probabilidades de captura 
+(ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se 
+estratifica la información de acuerdo con el análisis a realizar. En este caso, 
+como queremos estimar el subregistro de la presente violación por sexo y también
+por año del hecho, se estratificará por dichas variables.
+
 Seguido de esto se estratifica. Es importante que usted como usuario 
 vea que este proceso es netamente artesanal, es decir, usted puede usar su propio
 código o funciones para realizar este proceso que, en nuestro caso, será a través
@@ -201,7 +210,7 @@ El objeto **listas** contiene dos listas. La primera, llamada **strata_data** da
 contiene las víctimas que fueron víctimas de este hecho en cada uno de los años 
 -desagregado por sexo- para cada una de las réplicas. Por ejemplo, el 
 elemento 151 de la lista contiene las víctimas hombres en el año 2007 presentes 
-en la réplica 2 (ver el objeto **victimas_estrato**:
+en la réplica 2 (ver el objeto **victimas_estrato**):
 
 ```{r stratify-continuacion2, echo = TRUE}
 

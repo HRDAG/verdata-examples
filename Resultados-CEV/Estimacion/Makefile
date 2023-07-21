@@ -13,6 +13,12 @@ HERE := $(shell git rev-parse --show-toplevel)
 all: \
 	output/reclutamiento-anio-estratificacion.html	\
 	output/secuestro-anio_sexo-estratificacion.html	\
+	output/secuestro-edad_c-estratificacion.html \
+	output/secuestro-is_conflict-estratificacion.html \
+	output/secuestro-etnia-estratificacion.html \
+	output/secuestro-departamento-estratificacion.html\
+	output/secuestro-macrorregion_cev-estratificacion.html\
+	output/secuestro-perpetrador-estratificacion.html	\
 	output/homicidio-anio-estratificacion.html	\
 	output/homicidio-sexo-estratificacion.html \
 	output/desaparicion-sexo-estratificacion.html \
@@ -36,6 +42,42 @@ output/secuestro-anio_sexo-estratificacion.html: \
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
 				mv src/secuestro-anio_sexo-estratificacion.html output/
+
+output/secuestro-edad_c-estratificacion.html: \
+		src/secuestro-edad_c-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/secuestro-edad_c-estratificacion.html output/
+
+output/secuestro-is_conflict-estratificacion.html: \
+		src/secuestro-is_conflict-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/secuestro-is_conflict-estratificacion.html output/
+
+output/secuestro-etnia-estratificacion.html: \
+		src/secuestro-etnia-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/secuestro-etnia-estratificacion.html output/
+
+output/secuestro-departamento-estratificacion.html: \
+		src/secuestro-departamento-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/secuestro-departamento-estratificacion.html output/
+
+output/secuestro-macrorregion_cev-estratificacion.html: \
+		src/secuestro-macrorregion_cev-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/secuestro-macrorregion_cev-estratificacion.html output/
+
+output/secuestro-perpetrador-estratificacion.html:	\
+	src/secuestro-perpetrador-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/secuestro-perpetrador-estratificacion.html output/
 
 output/homicidio-anio-estratificacion.html: \
 		src/homicidio-anio-estratificacion.Rmd

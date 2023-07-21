@@ -66,7 +66,7 @@ La función `confirm_files` autentica los archivos que han sido descargados.
 Considerando que cada violación tiene hasta 100 réplicas, esta función permite
 autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en 
 caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
-realizar su análisis con todas las réplicas. Esta función devolvera el mensaje 
+realizar su análisis con todas las réplicas. Esta función devolverá el mensaje 
 _"You have the right file!"_ si los archivos son iguales a los publicados, o 
 el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ en caso contrario. 
 

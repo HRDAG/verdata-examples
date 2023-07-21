@@ -1,5 +1,5 @@
 ---
-title: "Proceso estratificación para estimación del total de víctimas vinculadas al conflicto armado"
+title: "Proceso estratificación para estimación de víctimas desagregadas por edad"
 subtitle: "Víctimas de secuestro - 1990–2018"
 output:
   rmdformats::robobook:
@@ -47,12 +47,13 @@ https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducció
 antes de continuar. 
 
 En este ejemplo se ilustrará el proceso de estratificación para el posterior 
-proceso de estimación del total de víctimas vinculadas al conflicto armado (1990–2018).
+proceso de estimación del total de víctimas vinculadas al conflicto armado 
+desagregadas por edad (1990–2018). 
 
 ## Autenticando e importando la base de datos (réplicas) {-}
 
-Se comienza autenticando e importando la base de datos, esto a 
-través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
+Se comienza autenticando e importando la base de datos, esto a través de dos 
+funciones del paquete `verdata`: las funciones `confirm_files` y 
 `read_replicates`. La autenticación de los datos es pertinente dado que estos 
 fueron publicados con la licencia de atribución 4.0 internacional de *Creative* 
 *Commons* (CC BY 4.0). Esta licencia permite la distribución y modificación de la 
@@ -100,10 +101,9 @@ paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 Vemos que tenemos `r myNum(nrow(replicas_datos))` registros, nuestras réplicas 
 van desde la número 1 hasta la 10. Además, nuestros datos tienen información 
 sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
-el año del hecho, la pertenencia étnica, entre otros. 
-Sin embargo, para centrarnos en un análisis más específico, tal como el realizado
-para el anexo metodológico, procederemos a transformar y/o filtrar 
-algunas variables. 
+el año del hecho, la pertenencia étnica, entre otros. Sin embargo, para 
+centrarnos en un análisis más específico, tal como el realizado para el anexo 
+metodológico, procederemos a crear, transformar y/o filtrar algunas variables. 
 
 ## Filtrando las réplicas acorde con el filtro del anexo metodológico {-}
 
@@ -112,7 +112,7 @@ información. Por ejemplo, las víctimas que se documentaron como víctimas
 de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a ser víctimas de 
 otras guerrillas, ya que este primer grupo oficialmente dejó de existir después 
 de dicho año (`perp_change` = TRUE). Adicionalmente filtramos por los secuestros 
-ocurridos dentro del marco del conflicto armado (is_conflict == 1).
+ocurridos dentro del marco del conflicto armado (is_conflict == 1). 
 
 ```{r filter-cev, echo = TRUE}
 
@@ -130,12 +130,40 @@ paged_table(replicas_estratos, options = list(rows.print = 10, cols.print = 5))
 Ahora bien, con el fin de controlar la heterogeneidad en las probabilidades de captura 
 (ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se 
 estratifica la información de acuerdo con el análisis a realizar. En este caso, 
-como queremos estimar el subregistro del total de víctimas de la presente violación, se 
-estratificará por año del hecho **yy_hecho**. Es importante que usted como usuario 
-vea que este proceso es netamente artesanal, es decir, usted puede usar su propio 
-código o funciones para realizar este proceso que, en nuestro caso, será a través
-de una función previamente creada (fuera del paquete `verdata`) para facilitar 
-este ejercicio:
+como queremos estimar el subregistro de la presente violación por edad, se 
+estratificará por quinquenio, la nueva categoría de edad creada en el anterior 
+paso ("edad_c") y las macrorregiones de la CEV que las importaremos a continuación:
+
+```{r macroregion, include=TRUE}
+
+macro_regiones <- readr::read_delim(here::here("Recursos/macroregiones_cev.csv"), 
+                                    delim = "|", show_col_types = FALSE) %>%
+  dplyr::mutate_all(as.character) %>% 
+  dplyr::rename(muni_code_hecho = cod_mpio) %>%
+  dplyr::mutate(muni_code_hecho = as.numeric(muni_code_hecho)) %>%
+  dplyr::filter(macroregion != "Sumapaz") %>% 
+  dplyr::distinct(muni_code_hecho, .keep_all = TRUE)
+
+paged_table(macro_regiones, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+Luego procederemos a unir esta información con nuestras réplicas:
+
+```{r union-bases, include=TRUE}
+
+replicas_estratos <- replicas_estratos %>% 
+  dplyr::mutate(muni_code_hecho = as.numeric(muni_code_hecho)) %>%
+  dplyr::left_join(macro_regiones, by = c("muni_code_hecho")) %>%
+  dplyr::filter(!is.na(macroregion))
+
+```
+
+Por último procederemos a estratificar. Es importante que usted como 
+usuario vea que este proceso es netamente artesanal, es decir, usted puede usar
+su propio código o funciones para realizar este proceso que, en nuestro caso, 
+será a través de una función previamente creada (fuera del paquete `verdata`) 
+para facilitar este ejercicio:
 
 ```{r estratificacion-funcion, echo = TRUE}
 
@@ -187,7 +215,7 @@ A continuación se aplica la función:
 
 ```{r stratify-continuacion, echo = TRUE}
 
-schema <- ("replica,yy_hecho")
+schema <- ("replica,quinquenio,macroregion,edad_c")
 
 listas <- stratify(replicas_estratos, schema)
 
@@ -196,22 +224,23 @@ listas <- stratify(replicas_estratos, schema)
 El paso anterior muestra la forma en la que aplicamos la función. Considerando 
 que en este ejemplo queremos estimar el número de víctimas de la presente violación
 por la(s) variable(s) nombrada(s), la estratificación se hace por la variable 
-**yy_hecho** para cada réplica. El objeto **schema** contiene una 
-cadena de caracteres con los nombres de las variables en el *data frame*. Luego, 
-como se mencionó, usamos la tabla **replicas_estratos** como primer argumento y el 
-objeto **schema** como segundo. Lo que obtenemos es lo siguiente:
+**quinquenio**, **macroregion** y **edad_c** para cada réplica. El objeto 
+**schema** contiene una cadena de caracteres con los nombres de las variables
+en el *data frame*. Luego, como se mencionó, usamos la tabla **replicas_estratos**
+como primer argumento y el objeto **schema** como segundo. Lo que obtenemos es lo siguiente:
 
 El objeto **listas** contiene dos listas. La primera, llamada **strata_data** data
-contiene las víctimas que fueron víctimas de este hecho en cada uno de los años 
-para cada una de las réplicas. Por ejemplo, el elemento 151 de la lista contiene 
-las víctimas en el año de 1995 presentes en la réplica 5 (ver el objeto
-**victimas_estrato** y **victimas_estrato_nombre**):
+contiene las víctimas que fueron víctimas de este hecho en cada uno de los
+quinquenios y macrorregiones para cada una de las réplicas. Por ejemplo, el elemento 10 de la 
+lista contiene las víctimas del Magdalena Medio, adultas (en el quinquenio 1990-1994) 
+presentes en la réplica 1 (ver el objeto **victimas_estrato** y 
+**victimas_estrato_nombre**):
 
 ```{r stratify-continuacion2, echo = TRUE}
 
 datos <- listas[["strata_data"]]
 
-victimas_estrato <- datos[[151]]
+victimas_estrato <- datos[[10]]
 
 paged_table(victimas_estrato, options = list(rows.print = 10, cols.print = 5))
 
@@ -221,7 +250,7 @@ paged_table(victimas_estrato, options = list(rows.print = 10, cols.print = 5))
 
 nombres <- listas[["stratification_vars"]]
 
-victimas_estrato_nombre <- nombres[[151]]
+victimas_estrato_nombre <- nombres[[10]]
 
 paged_table(victimas_estrato_nombre, options = list(rows.print = 10, cols.print = 5))
 
@@ -235,8 +264,8 @@ combinación de estas:
 ```{r save-estratify, echo = TRUE}
 
 saveRDS(listas, 
-        here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-is_conflict-secuestro.rds"))
+        here::here("Resultados-CEV/Estimacion/output-estimacion/quinquenio-macrorregion-edad-secuestro.rds"))
 
 ```
 
-El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/secuestro-is_conflict-estimacion.html).
+El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/secuestro-edad_c-estimacion.html).
