@@ -16,7 +16,8 @@ stratify <- function(replicate_data, schema) {
   schema_list <- unlist(str_split(schema, pattern = ","))
   
   grouped_data <- replicate_data %>%
-    group_by(!!!syms(schema_list))
+    group_by(!!!syms(schema_list)) %>% 
+    select(starts_with("in_"))
   
   stratification_vars <- grouped_data %>%
     group_keys() %>%
@@ -239,7 +240,8 @@ mse <- function(stratum_data, stratum_name,
 
 desaparicion <- verdata::read_replicates("~/Documents/verdata-parquet/desaparicion",
                                          "desaparicion", 1, 10) %>% 
-  filter(is_conflict == TRUE)
+  filter(is_conflict == TRUE) %>% 
+  filter(is_forced_dis == TRUE)
 
 # 2.2 stratification 
 
@@ -252,6 +254,10 @@ estratificacion <- stratify(desaparicion, schema)
 test_lookup <- map_dfr(estratificacion$strata_data,
                        lookup_estimates,
                        estimates_dir = "~/Documents/estimates")
+
+test_exist <- map_dfr(estratificacion$strata_data,
+                      estimates_exist,
+                      estimates_dir = "~/Documents/estimates")
 
 # 2.4 Testing short_mse
 
