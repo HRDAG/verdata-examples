@@ -21,6 +21,11 @@ all: \
 	output/secuestro-perpetrador-estratificacion.html	\
 	output/homicidio-anio-estratificacion.html	\
 	output/homicidio-sexo-estratificacion.html \
+	output/homicidio-edad-estratificacion.html \
+	output/homicidio-etnia-estratificacion.html \
+	output/homicidio-departamento-estratificacion.html \
+	output/homicidio-macrorregion_cev-estratificacion.html	\
+	output/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.html	\
 	output/desaparicion-sexo-estratificacion.html \
 	output/desaparicion-edad_c-estratificacion.html	\
 	output/desaparicion-etnia-estratificacion.html	\
@@ -90,6 +95,36 @@ output/homicidio-sexo-estratificacion.html: \
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
 				mv src/homicidio-sexo-estratificacion.html output/
+
+output/homicidio-edad-estratificacion.html: \
+		src/homicidio-edad-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/homicidio-edad-estratificacion.html output/
+
+output/homicidio-etnia-estratificacion.html: \
+		src/homicidio-etnia-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/homicidio-etnia-estratificacion.html output/
+
+output/homicidio-departamento-estratificacion.html: \
+		src/homicidio-departamento-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/homicidio-departamento-estratificacion.html output/
+
+output/homicidio-macrorregion_cev-estratificacion.html: \
+		src/homicidio-macrorregion_cev-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/homicidio-macrorregion_cev-estratificacion.html output/
+
+output/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.html: \
+		src/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.html output/
 
 output/desaparicion-sexo-estratificacion.html: \
 		src/desaparicion-sexo-estratificacion.Rmd

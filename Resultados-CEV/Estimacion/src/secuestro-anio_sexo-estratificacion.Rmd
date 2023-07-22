@@ -91,10 +91,16 @@ razón, usted quiere leer dicha información a pesar de saber que no son los mis
 originalmente publicados, puede cambiar el argumento `crash` a FALSE, y, 
 en ese caso, podrá ver los datos junto con el mismo mensaje de advertencia. 
 
+Adicionalmente, como queremos estimar únicamente a las víctimas vinculadas al 
+conflicto armado, filtraremos por aquellas personas víctimas dentro de este marco 
+(is_conflict == 1):
+
 ```{r open-replicates, echo = TRUE}
 
 replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/secuestro"),
-                                           "secuestro", 1, 10)
+                                           "secuestro", 1, 10) %>% 
+  dplyr::mutate(is_conflict = as.integer(is_conflict)) %>%
+  dplyr::filter(is_conflict == 1)
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 
@@ -103,30 +109,7 @@ paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 Vemos que tenemos `r myNum(nrow(replicas_datos))` registros, nuestras réplicas 
 van desde la número 1 hasta la 10. Además, nuestros datos tienen información 
 sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
-el año del hecho, la pertenencia étnica, entre otros. Sin embargo, para centrarnos 
-en un análisis más específico, tal como el realizado para el anexo metodológico,
-procederemos a crear, transformar y/o filtrar algunas variables. 
-
-## Filtrando las réplicas acorde con el filtro del anexo metodológico {-}
-
-La función `filter_standard_cev` nos permite transformar o filtrar nuestra
-información. Por ejemplo, las víctimas que se documentaron como víctimas 
-de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a ser víctimas de 
-otras guerrillas, ya que este primer grupo oficialmente dejó de existir después 
-de dicho año (`perp_change` = TRUE). Adicionalmente filtramos por los secuestros 
-ocurridos dentro del marco del conflicto armado (is_conflict == 1).
-
-```{r filter-cev, echo = TRUE}
-
-replicas_estratos <- verdata::filter_standard_cev(replicas_datos,
-                                                   "secuestro", 
-                                                   perp_change = TRUE) %>% 
-  dplyr::mutate(is_conflict = as.integer(is_conflict)) %>%
-  dplyr::filter(is_conflict == 1)
-
-paged_table(replicas_estratos, options = list(rows.print = 10, cols.print = 5))
-
-```
+el año del hecho, la pertenencia étnica, entre otros.
 
 ## Proceso estratificación para estimaciones {-}
 
@@ -134,9 +117,7 @@ Ahora bien, con el fin de controlar la heterogeneidad en las probabilidades de c
 (ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se 
 estratifica la información de acuerdo con el análisis a realizar. En este caso, 
 como queremos estimar el subregistro de la presente violación por sexo y también
-por año del hecho, se estratificará por dichas variables.
-
-Seguido de esto se estratifica. Es importante que usted como usuario 
+por año del hecho, se estratificará por dichas variables. Es importante que usted como usuario 
 vea que este proceso es netamente artesanal, es decir, usted puede usar su propio
 código o funciones para realizar este proceso que, en nuestro caso, será a través
 de una función previamente creada (fuera del paquete `verdata`) para facilitar 
@@ -170,7 +151,7 @@ Entonces, en primera instancia creamos una función que necesita de dos
 argumentos:
 
 -  El argumento **replicate_data** se refiere a un *data frame* a estratificar,
-que en nuestro caso es **replicas_estratos**, es decir, la información previamente 
+que en nuestro caso es **replicas_datos**, es decir, la información previamente 
 filtrada.
 
 - El segundo argumento son las variables de estratificación (**schema**). 
@@ -178,7 +159,7 @@ Recordemos que la estratificación es un instrumento para controlar la heterogen
 entonces estas son variables que pensamos pueden afectar la probabilidad de 
 registro de las víctimas y, por lo tanto, queremos agrupar las víctimas con 
 características similares. Todas estas variables deben encontrarse en el objeto 
-**replicas_estratos**.
+**replicas_datos**.
 
 En términos generales, lo que hace esta función es: primero agrupa por las
 variables de estratificación y guarda en una lista llamada **strata_data** esta 
@@ -194,7 +175,7 @@ A continuación se aplica la función:
 
 schema <- ("replica,yy_hecho,sexo")
 
-listas <- stratify(replicas_estratos, schema)
+listas <- stratify(replicas_datos, schema)
 
 ```
 
@@ -203,7 +184,7 @@ que en este ejemplo queremos estimar el número de víctimas de la presente viol
 por la(s) variable(s) nombrada(s), la estratificación se hace por la(s) variable(s) 
 **yy_hecho** y **sexo** para cada réplica. El objeto **schema** contiene una 
 cadena de caracteres con los nombres de las variables en el *data frame*. Luego, 
-como se mencionó, usamos la tabla **replicas_estratos** como primer argumento y el 
+como se mencionó, usamos la tabla **replicas_datos** como primer argumento y el 
 objeto **schema** como segundo. Lo que obtenemos es lo siguiente:
 
 El objeto **listas** contiene dos listas. La primera, llamada **strata_data** data

@@ -109,17 +109,14 @@ metodológico, procederemos a crear, transformar y/o filtrar algunas variables.
 ## Filtrando las réplicas acorde con el filtro del anexo metodológico {-}
 
 La función `filter_standard_cev` nos permite transformar o filtrar nuestra
-información. Por ejemplo, las víctimas que se documentaron como víctimas 
-de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a ser víctimas de 
-otras guerrillas, ya que este primer grupo oficialmente dejó de existir después 
-de dicho año (`perp_change` = TRUE). Adicionalmente filtramos por los secuestros 
-ocurridos dentro del marco del conflicto armado (is_conflict == 1). 
+información. Por ejemplo, esta función permite obtener nuevas variables de tiempo 
+(como quinquenio), variables de edad (como "edad_c"), entre otros.
 
 ```{r filter-cev, echo = TRUE}
 
 replicas_estratos <- verdata::filter_standard_cev(replicas_datos,
                                                    "secuestro", 
-                                                   perp_change = TRUE) %>% 
+                                                   perp_change = FALSE) %>% 
   dplyr::mutate(is_conflict = as.integer(is_conflict)) %>%
   dplyr::filter(is_conflict == 1)
 

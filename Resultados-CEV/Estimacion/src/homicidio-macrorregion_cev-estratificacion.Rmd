@@ -1,6 +1,6 @@
 ---
 title: "Proceso estratificación para estimación de víctimas desagregadas por macrorregiones de la CEV"
-subtitle: "Víctimas de secuestro - 1990–2018"
+subtitle: "Víctimas de homicidio - 1985–2018"
 output:
   rmdformats::robobook:
     code_folding: show
@@ -49,7 +49,7 @@ https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducció
 antes de continuar. 
 
 En este ejemplo, se ilustrará el proceso de estratificación para el posterior
-proceso de estimación del total de víctimas por macrorregion de la CEV (1990–2018). 
+proceso de estimación del total de víctimas por macrorregion de la CEV (1985–2018). 
 Para esto necesitaremos un insumo adicional que serán las [macrorregiones](https://web.comisiondelaverdad.co/actualidad/noticias/comision-de-la-verdad-inicia-el-despliegue-exploratorio-en-macroregiones#:~:text=Las%20nueve%20macrorregiones%20definidas%20son,Magdalena%2C%20Sucre%20y%20San%20Andr%C3%A9s.) 
 que se crearon en la Comisión de la Verdad (CEV). Así, procederemos a importar 
 dicho insumo que se encuentra en la carpeta "Recursos" (usando el paquete `readr`) 
@@ -90,8 +90,8 @@ el error _"This file is not identical to the one published. This means the resul
 
 ```{r confirm-replicates, eval=FALSE}
 
-verdata::confirm_files(here::here("verdata-parquet/secuestro"), 
-                                  "secuestro", 1, 10)
+verdata::confirm_files(here::here("verdata-parquet/homicidio"), 
+                                  "homicidio", 1, 10)
 
 ```
 
@@ -110,8 +110,8 @@ en ese caso, podrá ver los datos junto con el mismo mensaje de advertencia.
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/secuestro"),
-                                           "secuestro", 1, 10)
+replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/homicidio"),
+                                           "homicidio", 1, 10)
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 
@@ -127,14 +127,14 @@ el año del hecho, la pertenencia étnica, las fuentes de información, entre ot
 La función `filter_standard_cev` nos permite transformar o filtrar nuestra
 información. Por ejemplo, esta función permite obtener nuevas variables de tiempo 
 (como quinquenio), variables de edad (como "edad_c"), entre otros. 
-Adicionalmente filtramos por los secuestros ocurridos dentro del marco del 
+Adicionalmente filtramos por los homicidios ocurridos dentro del marco del 
 conflicto armado (is_conflict == 1) y unimos esta información con las 
 macrorregiones:
 
 ```{r filter-cev, echo = TRUE}
 
 replicas_estratos <- verdata::filter_standard_cev(replicas_datos,
-                                                   "secuestro", 
+                                                   "homicidio", 
                                                    perp_change = FALSE) %>% 
   dplyr::mutate(is_conflict = as.integer(is_conflict)) %>%
   dplyr::filter(is_conflict == 1) %>% 
@@ -223,8 +223,8 @@ argumento y el objeto **schema** como segundo. Lo que obtenemos es lo siguiente:
 El objeto **listas** contiene dos listas. La primera, llamada **strata_data** que
 contiene las víctimas que fueron víctimas de este hecho según sus características
 para cada una de las réplicas. Por ejemplo, el elemento 25 de la lista contiene
-las víctimas de la macrorregion Centro-Andina que fueron secuestradas
-en el quinquenio de 2000-2004 presentes en la réplica 1 (ver el objeto 
+las víctimas de la macrorregion Centro-Andina que fueron asesinadas
+en el quinquenio de 1995-1999 presentes en la réplica 1 (ver el objeto 
 **victimas_estrato**):
 
 ```{r stratify-continuacion2, echo = TRUE}
@@ -255,11 +255,11 @@ paged_table(victimas_estrato_nombre, options = list(rows.print = 10, cols.print 
 
 Teniendo esta estratificación procederemos a guardar el objeto `listas` 
 en nuestra maquina local (con la función `saveRDS`) para usarlo en nuestro 
-próximo ejemplo sobre el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/secuestro-macrorregion-estimacion.html).
+próximo ejemplo sobre el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/homicidio-macrorregion-estimacion.html).
 
 ```{r save-estratify, echo = TRUE}
 
 saveRDS(listas, 
-        here::here("Resultados-CEV/Estimacion/output-estimacion/quinquenio-macrorregion-secuestro.rds"))
+        here::here("Resultados-CEV/Estimacion/output-estimacion/quinquenio-macrorregion-homicidio.rds"))
 
 ```
