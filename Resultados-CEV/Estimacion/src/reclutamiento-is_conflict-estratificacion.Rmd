@@ -1,6 +1,6 @@
 ---
-title: "Proceso de estratificación"
-subtitle: "Reclutamientos a menores de edad desagregados por año del hecho - 1990–2017"
+title: "Proceso estratificación para estimación del total de víctimas vinculadas al conflicto armado"
+subtitle: "Reclutamientos a menores de edad - 1990–2017"
 output:
   rmdformats::robobook:
     code_folding: show
@@ -49,11 +49,12 @@ https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducció
 antes de continuar. 
 
 En este ejemplo se ilustrará el proceso de estratificación para el posterior 
-proceso de estimación del total de víctimas por año del hecho (1990–2017).
+proceso de estimación del total de víctimas reclutadas vinculadas al conflicto 
+armado (1990–2018).
 
 ## Autenticando e importando la base de datos (réplicas) {-}
 
-Se comienza autenticando e importando la base de datos, esto a 
+Se comienza autenticando e importando la base de datos de reclutamiento, esto a 
 través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
 `read_replicates`. La autenticación de los datos es pertinente dado que estos 
 fueron publicados con la licencia de atribución 4.0 internacional de *Creative* 
@@ -104,14 +105,13 @@ van desde la número 1 hasta la 10. Además, nuestros datos tienen información
 sobre la categoría de edad de la víctima, el presunto perpetrador, el sexo, 
 el año del hecho, la pertenencia étnica, las fuentes de información, entre otros. 
 
-
 ## Filtrando las réplicas acorde con el filtro del anexo metodológico {-}
 
 La función `filter_standard_cev` nos permite transformar o filtrar nuestra
 información. Para el caso de reclutamiento optamos por analizar a las víctimas 
-menores de 18 años por año, es decir, a aquellas víctimas que pertenecen a la 
-categoría de infancia y adolescencia y que las incluimos en una nueva categoría
-denominada "MENOR".
+menores de 18 años, es decir, a aquellas víctimas que pertenecen a la 
+categoría de infancia y adolescencia. Además dicha función nos permite obtener 
+nuevas variables, tal como la variable de "periodo presidencial", entre otras:
 
 ```{r filter-cev, echo = TRUE}
 
@@ -123,13 +123,68 @@ paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
+Procederemos además a importar dos bases adicionales: la primera es una base 
+del DANE que muestra información a nivel municipal y departamental:
+
+```{r dane, echo = TRUE}
+
+dane <- arrow::read_parquet(here::here("Recursos/DANE-dipo.parquet")) %>% 
+  dplyr::rename(dept_code_hecho = codigo_departamento,
+                dept_name = nombre_departamento,
+                muni_code_hecho = codigo_municipio,
+                muni_name = nombre_municipio) %>%
+  dplyr::select(starts_with("dept_"), starts_with("muni_")) %>%
+  dplyr::mutate(dept_code_hecho = as.integer(dept_code_hecho),
+         muni_code_hecho = as.integer(muni_code_hecho)) %>%
+  dplyr::distinct()
+
+paged_table(dane, options = list(rows.print = 10, cols.print = 5))
+
+```
+E importamos otra base a nivel municipal que nos muestra la información de los 
+municipios que conforman la "zona de distensión"^[O también denominada zona de 
+despeje de San Vicente del Caguán, el cual estaba conformado por algunos 
+municipios del departamento del Meta, tal como Mesetas, La Macarena, La Uribe, 
+Vista Hermosa, así como San Vicente del Caguán (en el departamento del Caquetá)]
+en comparación con los municipios vecinos a dicho territorio, así como en el
+resto de los municipios de Colombia.
+
+```{r municipios, include=TRUE}
+
+municipios <- read_delim(here::here("Recursos/municipios_involved.csv"), delim = "|",
+                         show_col_types = FALSE) %>% 
+  dplyr::mutate(muni_code_hecho = as.integer(muni_code_hecho)) 
+
+```
+
+Antes del proceso de estratificación procedemos a unir dicha información:
+
+```{r union-bases, include=TRUE}
+
+dane_region <- dane %>% 
+  dplyr::left_join(municipios, by = c("muni_code_hecho")) %>% 
+  dplyr::mutate(muni_code_hecho = as.character(muni_code_hecho)) 
+
+```
+
+Por último procedemos a unir la base **dane_region** a nuestras réplicas filtradas:
+
+```{r replicas-union, include=TRUE}
+
+replicas_estratos <- replicas_filtradas %>% 
+  dplyr::mutate(muni_code_hecho = as.character(muni_code_hecho)) %>% 
+  dplyr::left_join(dane_region, by = c("muni_code_hecho")) %>% 
+  assertr::verify(!is.na(region))
+
+```
+
 ## Proceso estratificación para estimaciones {-}
 
-Con el fin de controlar la heterogeneidad en las probabilidades de captura 
-(ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se estratifica la información de acuerdo con el análisis a realizar. En este caso, 
-como queremos estimar el subregistro de la presente violación por año del hecho,
-se estratificará por año del hecho y la nueva categoría de edad generada 
-por la anterior función; seguido de esto se estratifica. Es importante que usted 
+Ahora, con el fin de controlar la heterogeneidad en las probabilidades de captura 
+(ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) 
+se estratifica la información de acuerdo con el análisis a realizar. En este caso, 
+como queremos estimar el subregistro del total de víctimas de la presente violación
+se estratificará por periodo presidencial y region. Es importante que usted 
 como usuario vea que este proceso es netamente artesanal, es decir, usted puede 
 usar su propio código o funciones para realizar este proceso que, en nuestro 
 caso, será a través de una función previamente creada (fuera del paquete 
@@ -163,7 +218,7 @@ Entonces, en primera instancia creamos una función que necesita de dos
 argumentos:
 
 -  El argumento **replicate_data** se refiere a un *data frame* a estratificar,
-que en nuestro caso es **replicas_filtradas**, es decir, la información previamente 
+que en nuestro caso es **replicas_estratos**, es decir, la información previamente 
 filtrada.
 
 - El segundo argumento son las variables de estratificación (**schema**). 
@@ -185,39 +240,38 @@ A continuación se aplica la función:
 
 ```{r stratify-continuacion, echo = TRUE}
 
-schema <- ("replica,yy_hecho,edad_c")
+schema <- ("replica,periodo_pres,region")
 
-listas <- stratify(replicas_filtradas, schema)
+listas <- stratify(replicas_estratos, schema)
 
 ```
 
 El paso anterior muestra la forma en la que aplicamos la función. Considerando 
 que en este ejemplo queremos estimar el número de víctimas de la presente violación
 por la(s) variable(s) nombrada(s), la estratificación se hace por la variable 
-**yy_hecho** y **edad_c** para cada réplica. El objeto **schema** contiene una 
+**periodo_pres** y **region** para cada réplica. El objeto **schema** contiene una 
 cadena de caracteres con los nombres de las variables en el *data frame*. Luego, 
-como se mencionó, usamos la tabla **replicas_filtradas** como primer argumento y el 
+como se mencionó, usamos la tabla **replicas_estratos** como primer argumento y el 
 objeto **schema** como segundo. Lo que obtenemos es lo siguiente:
 
 El objeto **listas** contiene dos listas. La primera, llamada **strata_data** data
 contiene las víctimas que fueron víctimas de este hecho en cada uno de los años 
 -desagregado por edad- para cada una de las réplicas. Por ejemplo, el 
-elemento 151 de la lista contiene las víctimas menores de edad en el año de 1995
-presentes en la réplica 5 (ver el objeto **victimas_estrato**):
+elemento 1 de la lista contiene las víctimas menores de edad que fueron reclutadas
+cerca a la zonas desmilitarizadas durante el periodo 1990 - 1993, 
+presentes en la réplica 1 (ver el objeto 
+**victimas_estrato** y **victimas_estrato_nombre**):
 
 ```{r stratify-continuacion2, echo = TRUE}
 
 datos <- listas[["strata_data"]]
 
-victimas_estrato <- datos[[151]]
+victimas_estrato <- datos[[1]]
 
 paged_table(victimas_estrato, options = list(rows.print = 10, cols.print = 5))
 
 ```
-La segunda lista, llamada **stratification_vars**, contiene el nombre de cada 
-estrato. Siguiendo el mismo ejemplo, el elemento 151 de **stratification_vars** 
-contiene una columna con la réplica (R5), una columna con el año (1995) y la categoría
-de edad. Nuevamente, este solo es un ejemplo de nuestra forma de estratificar,
+Nuevamente, este solo es un ejemplo de nuestra forma de estratificar,
 usted puede hacerlo de otra manera. La idea principal es agrupar las víctimas
 por las variables del estrato y las réplicas que esté usando.
 
@@ -225,7 +279,7 @@ por las variables del estrato y las réplicas que esté usando.
 
 nombres <- listas[["stratification_vars"]]
 
-victimas_estrato_nombre <- nombres[[151]]
+victimas_estrato_nombre <- nombres[[1]]
 
 paged_table(victimas_estrato_nombre, options = list(rows.print = 10, cols.print = 5))
 
@@ -239,8 +293,8 @@ combinación de estas:
 ```{r save-estratify, echo = TRUE}
 
 saveRDS(listas, 
-        here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-edad_c-reclutamiento.rds"))
+        here::here("Resultados-CEV/Estimacion/output-estimacion/periodo_pres-region-reclutamiento.rds"))
 
 ```
 
-El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/reclutamiento-anio-estimacion.html).
+El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/reclutamiento-is_conflict-estimacion.html).

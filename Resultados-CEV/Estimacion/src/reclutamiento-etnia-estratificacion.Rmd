@@ -1,6 +1,6 @@
 ---
 title: "Proceso de estratificación"
-subtitle: "Reclutamientos a menores de edad desagregados por año del hecho - 1990–2017"
+subtitle: "Reclutamientos a menores de edad desagregados por etnia - 1990–2017"
 output:
   rmdformats::robobook:
     code_folding: show
@@ -49,11 +49,11 @@ https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducció
 antes de continuar. 
 
 En este ejemplo se ilustrará el proceso de estratificación para el posterior 
-proceso de estimación del total de víctimas por año del hecho (1990–2017).
+proceso de estimación del total de víctimas por etnia (1990–2017).
 
 ## Autenticando e importando la base de datos (réplicas) {-}
 
-Se comienza autenticando e importando la base de datos, esto a 
+Se comienza autenticando e importando la base de datos de reclutamiento, esto a 
 través de dos funciones del paquete `verdata`: las funciones `confirm_files` y 
 `read_replicates`. La autenticación de los datos es pertinente dado que estos 
 fueron publicados con la licencia de atribución 4.0 internacional de *Creative* 
@@ -109,9 +109,11 @@ el año del hecho, la pertenencia étnica, las fuentes de información, entre ot
 
 La función `filter_standard_cev` nos permite transformar o filtrar nuestra
 información. Para el caso de reclutamiento optamos por analizar a las víctimas 
-menores de 18 años por año, es decir, a aquellas víctimas que pertenecen a la 
-categoría de infancia y adolescencia y que las incluimos en una nueva categoría
-denominada "MENOR".
+menores de 18 años, es decir, a aquellas víctimas que pertenecen a la 
+categoría de infancia y adolescencia. Además dicha función nos permite obtener 
+nuevas variables, tal como la variable de "periodo presidencial" para esta 
+violación en particular y la variable de "etnia2", la cual agrupa víctimas 
+NARP, indígenas y ROM en una categoría denominada "ETNICO":
 
 ```{r filter-cev, echo = TRUE}
 
@@ -125,11 +127,11 @@ paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
 
 ## Proceso estratificación para estimaciones {-}
 
-Con el fin de controlar la heterogeneidad en las probabilidades de captura 
-(ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se estratifica la información de acuerdo con el análisis a realizar. En este caso, 
-como queremos estimar el subregistro de la presente violación por año del hecho,
-se estratificará por año del hecho y la nueva categoría de edad generada 
-por la anterior función; seguido de esto se estratifica. Es importante que usted 
+Ahora, con el fin de controlar la heterogeneidad en las probabilidades de captura 
+(ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) 
+se estratifica la información de acuerdo con el análisis a realizar. En este caso, 
+como queremos estimar el subregistro de la presente violación por etnia,
+se estratificará por periodo presidencial, etnia2 y sexo. Es importante que usted 
 como usuario vea que este proceso es netamente artesanal, es decir, usted puede 
 usar su propio código o funciones para realizar este proceso que, en nuestro 
 caso, será a través de una función previamente creada (fuera del paquete 
@@ -185,7 +187,7 @@ A continuación se aplica la función:
 
 ```{r stratify-continuacion, echo = TRUE}
 
-schema <- ("replica,yy_hecho,edad_c")
+schema <- ("replica,periodo_pres,etnia2,sexo")
 
 listas <- stratify(replicas_filtradas, schema)
 
@@ -194,7 +196,7 @@ listas <- stratify(replicas_filtradas, schema)
 El paso anterior muestra la forma en la que aplicamos la función. Considerando 
 que en este ejemplo queremos estimar el número de víctimas de la presente violación
 por la(s) variable(s) nombrada(s), la estratificación se hace por la variable 
-**yy_hecho** y **edad_c** para cada réplica. El objeto **schema** contiene una 
+**periodo_pres**, **etnia2** y **sexo** para cada réplica. El objeto **schema** contiene una 
 cadena de caracteres con los nombres de las variables en el *data frame*. Luego, 
 como se mencionó, usamos la tabla **replicas_filtradas** como primer argumento y el 
 objeto **schema** como segundo. Lo que obtenemos es lo siguiente:
@@ -202,22 +204,20 @@ objeto **schema** como segundo. Lo que obtenemos es lo siguiente:
 El objeto **listas** contiene dos listas. La primera, llamada **strata_data** data
 contiene las víctimas que fueron víctimas de este hecho en cada uno de los años 
 -desagregado por edad- para cada una de las réplicas. Por ejemplo, el 
-elemento 151 de la lista contiene las víctimas menores de edad en el año de 1995
-presentes en la réplica 5 (ver el objeto **victimas_estrato**):
+elemento 100 de la lista contiene las víctimas mujeres (mestizas) menores de 
+edad en el periodo 2002-2005, presentes en la réplica 3 (ver el objeto 
+**victimas_estrato** y **victimas_estrato_nombre**):
 
 ```{r stratify-continuacion2, echo = TRUE}
 
 datos <- listas[["strata_data"]]
 
-victimas_estrato <- datos[[151]]
+victimas_estrato <- datos[[100]]
 
 paged_table(victimas_estrato, options = list(rows.print = 10, cols.print = 5))
 
 ```
-La segunda lista, llamada **stratification_vars**, contiene el nombre de cada 
-estrato. Siguiendo el mismo ejemplo, el elemento 151 de **stratification_vars** 
-contiene una columna con la réplica (R5), una columna con el año (1995) y la categoría
-de edad. Nuevamente, este solo es un ejemplo de nuestra forma de estratificar,
+Nuevamente, este solo es un ejemplo de nuestra forma de estratificar,
 usted puede hacerlo de otra manera. La idea principal es agrupar las víctimas
 por las variables del estrato y las réplicas que esté usando.
 
@@ -225,7 +225,7 @@ por las variables del estrato y las réplicas que esté usando.
 
 nombres <- listas[["stratification_vars"]]
 
-victimas_estrato_nombre <- nombres[[151]]
+victimas_estrato_nombre <- nombres[[100]]
 
 paged_table(victimas_estrato_nombre, options = list(rows.print = 10, cols.print = 5))
 
@@ -239,8 +239,8 @@ combinación de estas:
 ```{r save-estratify, echo = TRUE}
 
 saveRDS(listas, 
-        here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-edad_c-reclutamiento.rds"))
+        here::here("Resultados-CEV/Estimacion/output-estimacion/periodo_pres-etnia2-sexo-reclutamiento.rds"))
 
 ```
 
-El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/reclutamiento-anio-estimacion.html).
+El siguiente paso es realizar el proceso de [estimación y combinación](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/reclutamiento-etnia-estimacion.html).
