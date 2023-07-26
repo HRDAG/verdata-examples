@@ -72,7 +72,7 @@ el error _"This file is not identical to the one published. This means the resul
 
 ```{r confirm-replicates, eval=FALSE}
 
-verdata::confirm_files(here::here("verdata-replicas/verdata-parquet"), 
+verdata::confirm_files(here::here("../verdata-parquet/desaparicion"), 
                                   "desaparicion", 1, 10)
 
 ```
@@ -92,7 +92,7 @@ en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia.
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/desaparicion"),
+replicas_datos <- verdata::read_replicates(here::here("../verdata-parquet/desaparicion"),
                                            "desaparicion", 1, 10)
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
@@ -164,7 +164,7 @@ tabla_documentada <- verdata::summary_observed("desaparicion",
                                                forced_dis_filter = TRUE,
                                                edad_minors_filter = FALSE,
                                                include_props = FALSE,
-                                               prop_obs_na = FALSE)
+                                               include_props_na = FALSE)
 
 paged_table(tabla_documentada, options = list(rows.print = 4, cols.print = 4))
 
@@ -235,6 +235,7 @@ tabla_combinada <- verdata::combine_replicates("desaparicion",
 paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
 
 ```
+
 ```{r graph-replicates, echo = TRUE}
 
 tabla_combinada <- tabla_combinada %>% 
@@ -295,7 +296,9 @@ por año del hecho. Para empezar, es necesario filtrar por las variables de
 
 replicas_estratos <- replicas_datos %>% 
   dplyr::mutate(is_conflict = as.integer(is_conflict)) %>% 
-  dplyr::filter(is_conflict == 1)
+  dplyr::filter(is_conflict == 1,
+                is_forced_dis == 1)
+  
 
 paged_table(replicas_estratos, options = list(rows.print = 10, cols.print = 5))
 
@@ -314,7 +317,8 @@ stratify <- function(replicate_data, schema) {
     schema_list <- unlist(str_split(schema, pattern = ","))
     
     grouped_data <- replicate_data %>%
-        group_by(!!!syms(schema_list))
+      group_by(!!!syms(schema_list)) %>% 
+      select(starts_with("in_"))
     
     stratification_vars <- grouped_data %>%
         group_keys() %>%
@@ -457,6 +461,40 @@ estimaciones_dir <- here::here("estimates")
 
 ```
 
+Considerando que la función `mse` toma tiempo y recursos computacionales, usted puede tener interés en saber qué estratos tienen estimaciones, para eso, puede usar la función auxiliar `estimates_exist` de la siguiente forma:
+
+```{r buscar-estimaciones, echo = TRUE}
+
+prueba_estimacion <- purrr::map_dfr(listas$strata_data,
+                                    verdata::estimates_exist,
+                                    estimates_dir = estimaciones_dir)
+
+paged_table(prueba_estimacion, options = list(rows.print = 10, cols.print = 8))
+
+```
+
+Esto produce una tabla que indica si las estimaciones existen (`TRUE`) o no (`FALSE`). 
+Además, indica el path en el que se encuentra el archivo .json que contiene 
+la estimación. En este caso, de los 320 estratos posibles, existen 302 y no existen 18, por lo que se espera que la función `mse` corra relativamente rápido. 
+
+```{r calculo-estimaciones, eval=FALSE}
+
+estimacion <- purrr::map2_dfr(.x = listas$strata_data,
+                              .y = listas$stratification_vars,
+                              .f = verdata::mse,
+                              estimates_dir = estimaciones_dir)
+
+estimacion <- estimacion %>% 
+  unnest(c(replica, yy_hecho, is_forced_dis)) %>% 
+  mutate(stratum = paste(yy_hecho, is_forced_dis, sep = "-")) %>% 
+  select(-c(yy_hecho, is_forced_dis))
+  
+
+write_parquet(estimacion,
+              here::here("Resultados-CEV/Completos/output-estimacion/yy_desaparicion.parquet")
+
+```
+
 Al final el resultado será un data frame con cinco columnas: una columna 
 que indica si el estrato es válido o no (`TRUE` o `FALSE`); el número de muestras
 `N` de la distribución posterior (`NA` si el estrato no es válido); las fuentes
@@ -465,40 +503,18 @@ de las listas que son válidas del estrato (`n_obs`) y el nombre del estrato
 `stratum_name`. Si un estrato es estimable, este dataframe va a contener 1000
 muestras para cada estrato. Esto lo ilustramos a continuación.
 
-```{r estimaciones, eval=FALSE}
+```{r leer-estimaciones, echo = TRUE}
 
-estimacion <- purrr::map2_dfr(.x = listas$strata_data,
-                              .y = listas$stratification_vars,
-                              .f = mse,
-                              estimates_dir = estimaciones_dir)
-
-```
-
-estimacion <- estimacion %>% 
-  mutate(replica = stratum_name$replica,
-         statum_name = paste(stratum_name$yy_hecho,sep = "-")) %>% 
-  select(-starts_with("stratum_name"))
+estimacion <- read_parquet(here::here("Resultados-CEV/Completos/output-estimacion/yy_desaparicion.parquet"))
 
 paged_table(estimacion, options = list(rows.print = 10, cols.print = 8))
-
-```
-
-```{r open-estimates, echo = TRUE}
-
-estimacion <- arrow::read_parquet(here::here("CO-examples/Resultados-CEV/Estimacion/output-estimacion/yy_hecho.parquet"))
-
-estimacion <- estimacion %>%
-    mutate(stratum_name = paste(pull(stratum_name, 1),
-                                sep = "-"))
-
-paged_table(union_mse, options = list(rows.print = 10, cols.print = 8))
 
 ```
 
 ```{r combinacion-transformacion, echo = TRUE}
 
 tabla_final <- estimacion %>%
-    rename(replicate = replica) %>% 
+  rename(replicate = replica) %>% 
     select(-validated, -valid_sources)
 
 paged_table(tabla_final, options = list(rows.print = 10, cols.print = 5))
@@ -508,17 +524,16 @@ paged_table(tabla_final, options = list(rows.print = 10, cols.print = 5))
 ```{r combinacion-final, echo = TRUE}
 
 final_agrupacion <- tabla_final %>%
-    group_by(stratum_name)
+    group_by(stratum)
 
 estimates_tabla <- final_agrupacion %>%
-    group_split() %>%
-    map_dfr(.f = combine_estimates) %>%
-    bind_cols(group_keys(final_agrupacion)) %>% 
-    select(stratum_name, N_025, N_mean, N_975) %>% 
-    rename(yy_hecho = stratum_name)
+  group_split() %>%
+  map_dfr(.f = combine_estimates) %>%
+  bind_cols(group_keys(final_agrupacion)) %>% 
+  separate(stratum, into = c("yy_hecho", "is_forced_dis"), sep = "-", remove = FALSE) %>% 
+  select(yy_hecho, N_025, N_mean, N_975)
 
 paged_table(estimates_tabla, options = list(rows.print = 10, cols.print = 5))
-
 
 ```
 
