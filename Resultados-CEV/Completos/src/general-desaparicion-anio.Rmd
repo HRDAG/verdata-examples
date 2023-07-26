@@ -475,7 +475,7 @@ paged_table(prueba_estimacion, options = list(rows.print = 10, cols.print = 8))
 
 Esto produce una tabla que indica si las estimaciones existen (`TRUE`) o no (`FALSE`). 
 Además, indica el path en el que se encuentra el archivo .json que contiene 
-la estimación. En este caso, de los 320 estratos posibles, existen 302 y no existen 18, por lo que se espera que la función `mse` corra relativamente rápido. 
+la estimación. En este caso, de los 320 estratos posibles, existen 302 y no existen 18, por lo que se espera que la función `mse` corra un poco más rápido que si fuera necesario estimar todos los estratos. 
 
 ```{r calculo-estimaciones, eval=FALSE}
 
