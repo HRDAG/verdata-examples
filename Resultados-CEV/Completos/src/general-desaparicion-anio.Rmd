@@ -473,7 +473,6 @@ estimacion <- purrr::map2_dfr(.x = listas$strata_data,
                               .f = mse,
                               estimates_dir = estimaciones_dir)
 
-```
 
 estimacion <- estimacion %>% 
   mutate(replica = stratum_name$replica,
