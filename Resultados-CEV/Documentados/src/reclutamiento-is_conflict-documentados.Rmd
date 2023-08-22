@@ -64,17 +64,18 @@ de diferentes fuentes, es importante que sepa si han sido modificados o no, para
 lo que puede hacer uso de estas dos funciones. 
 
 La función `confirm_files` autentica los archivos que han sido descargados. 
-Considerando que cada violación tiene hasta 100 réplicas, esta función permite
+Considerandoque cada violación tiene hasta 100 réplicas, esta función permite 
 autenticar cada uno de estos archivos sin necesidad de leerlos a R. Esto, en 
 caso de querer ahorrar recursos computacionales, o en caso de que no vaya a 
-realizar su análisis con todas las réplicas. Esta función devolverá el mensaje 
-_"You have the right file!"_ si los archivos son iguales a los publicados, o 
-el error _"This file is not identical to the one published. This means the results of the analysis may potentially be inconsistent."_ en caso contrario. 
+realizar su análisis con todas las réplicas. Esta función devolverá una tabla 
+con dos columnas: una indicando la ruta del archivo y otra indicando si el archivo 
+es igual al publicado. En caso de que al menos uno de los archivos no sea igual, 
+la función devuelve el mensaje _"Some replicate file contents do not match the published versions"_. 
 
 ```{r confirm-replicates, eval=FALSE}
 
-verdata::confirm_files(here::here("verdata-parquet/reclutamiento"), 
-                                  "reclutamiento", 1, 10)
+confirmar <- verdata::confirm_files(here::here("verdata-parquet/reclutamiento"),
+                                    "reclutamiento", c(1:10))
 
 ```
 
@@ -104,7 +105,7 @@ en la Comisión de la Verdad.
 ```{r open-replicates, echo = TRUE}
 
 replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/reclutamiento"),
-                                           "reclutamiento", 1, 10)
+                                           "reclutamiento", c(1:10))
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 
