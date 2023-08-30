@@ -75,7 +75,7 @@ la función devuelve el mensaje _"Some replicate file contents do not match the 
 
 ```{r confirm-replicates, eval=FALSE}
 
-confirmar <- verdata::confirm_files(here::here("verdata-parquet/desaparicion"),
+confirmar <- verdata::confirm_files(here::here("../verdata-parquet/desaparicion"),
                                     "desaparicion", c(1:10))
 
 ```
@@ -105,7 +105,7 @@ en la Comisión de la Verdad.
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/desaparicion"),
+replicas_datos <- verdata::read_replicates(here::here("../verdata-parquet/desaparicion"),
                                            "desaparicion", c(1:10))
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
@@ -175,8 +175,7 @@ tabla_documentada <- verdata::summary_observed("desaparicion",
                                                conflict_filter = FALSE,
                                                forced_dis_filter = FALSE,
                                                edad_minors_filter = FALSE,
-                                               include_props = FALSE,
-                                               include_props_na = FALSE)
+                                               include_props = FALSE)
 
 paged_table(tabla_documentada, options = list(rows.print = 4, cols.print = 4))
 

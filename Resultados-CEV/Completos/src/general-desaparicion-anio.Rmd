@@ -164,8 +164,7 @@ tabla_documentada <- verdata::summary_observed("desaparicion",
                                                conflict_filter = TRUE,
                                                forced_dis_filter = TRUE,
                                                edad_minors_filter = FALSE,
-                                               include_props = FALSE,
-                                               prop_obs_na = FALSE)
+                                               include_props = FALSE)
 
 paged_table(tabla_documentada, options = list(rows.print = 4, cols.print = 4))
 
@@ -236,6 +235,7 @@ tabla_combinada <- verdata::combine_replicates("desaparicion",
 paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
 
 ```
+
 ```{r graph-replicates, echo = TRUE}
 
 tabla_combinada <- tabla_combinada %>% 
@@ -470,36 +470,45 @@ muestras para cada estrato. Esto lo ilustramos a continuación.
 
 estimacion <- purrr::map2_dfr(.x = listas$strata_data,
                               .y = listas$stratification_vars,
-                              .f = mse,
+                              .f = verdata::mse,
                               estimates_dir = estimaciones_dir)
 
-
-estimacion <- estimacion %>% 
-  mutate(replica = stratum_name$replica,
-         statum_name = paste(stratum_name$yy_hecho,sep = "-")) %>% 
-  select(-starts_with("stratum_name"))
+transformacion <- estimacion %>% 
+  mutate(replicate = stratum_name$replica,
+         name_stratum = paste(stratum_name$yy_hecho, stratum_name$is_forced_dis,sep = "-")) %>%
+  filter(validated) %>% 
+  select(validated, N, valid_sources, n_obs, replicate, name_stratum) %>% 
+  rename(stratum_name = name_stratum)
 
 paged_table(estimacion, options = list(rows.print = 10, cols.print = 8))
 
 ```
 
+```{r save-estimates, echo = FALSE, eval = FALSE}
+
+arrow::write_parquet(transformacion,
+                     "~/Documents/verdata-examples/Resultados-CEV/Estimacion/output-estimacion/yy_hecho.parquet")
+
+```
+
 ```{r open-estimates, echo = TRUE}
 
-estimacion <- arrow::read_parquet(here::here("CO-examples/Resultados-CEV/Estimacion/output-estimacion/yy_hecho.parquet"))
+estimacion <- arrow::read_parquet(here::here("verdata-examples/Resultados-CEV/Estimacion/output-estimacion/yy_hecho.parquet"))
 
-estimacion <- estimacion %>%
-    mutate(stratum_name = paste(pull(stratum_name, 1),
-                                sep = "-"))
-
-paged_table(union_mse, options = list(rows.print = 10, cols.print = 8))
+paged_table(estimacion, options = list(rows.print = 10, cols.print = 8))
 
 ```
 
 ```{r combinacion-transformacion, echo = TRUE}
 
-tabla_final <- estimacion %>%
-    rename(replicate = replica) %>% 
-    select(-validated, -valid_sources)
+tabla_sampler <- estimacion %>%
+  group_by(stratum_name, replicate) %>% 
+  separate(stratum_name, into = c("anio", "is_forced_dis"), 
+           sep = "-", remove = FALSE) %>% 
+  mutate(sample_number = glue("sample_{row_number()}")) %>% 
+  pivot_wider(id_cols = c("replicate", "stratum_name", "anio", "n_obs"),
+              values_from = N,
+              names_from = sample_number)
 
 paged_table(tabla_final, options = list(rows.print = 10, cols.print = 5))
 
@@ -507,14 +516,21 @@ paged_table(tabla_final, options = list(rows.print = 10, cols.print = 5))
 
 ```{r combinacion-final, echo = TRUE}
 
-final_agrupacion <- tabla_final %>%
-    group_by(stratum_name)
+final_agrupacion <- tabla_sampler %>% 
+    group_by(stratum_name, replicate) %>% 
+    summarize(across(c(starts_with("sample_"), "n_obs"), sum))
 
-estimates_tabla <- final_agrupacion %>%
-    group_split() %>%
-    map_dfr(.f = combine_estimates) %>%
-    bind_cols(group_keys(final_agrupacion)) %>% 
-    select(stratum_name, N_025, N_mean, N_975) %>% 
+stratum_group <- final_agrupacion %>%
+    group_by(stratum_name) %>%
+    pivot_longer(starts_with("sample_"), names_to = "replicate_num", values_to = "N") %>%
+    ungroup() %>% 
+    select(-replicate_num)
+
+estimates_tabla <- stratum_group %>%
+    group_split() %>% 
+    map_dfr(.f = verdata::combine_estimates) %>% 
+    bind_cols(group_keys(stratum_group)) %>% 
+    select(stratum_name, N_025, N_mean, N_975)
     rename(yy_hecho = stratum_name)
 
 paged_table(estimates_tabla, options = list(rows.print = 10, cols.print = 5))
