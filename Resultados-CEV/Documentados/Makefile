@@ -35,6 +35,7 @@ all: \
 	output/homicidio-is_conflict-documentados.html \
 	output/homicidio-departamento-documentados.html \
 	output/homicidio-etnia-documentados.html	\
+	output/homicidio-perpetrador-documentados.html \
 	output/homicidio-macrorregion_cev-documentados.html
 
 clean:

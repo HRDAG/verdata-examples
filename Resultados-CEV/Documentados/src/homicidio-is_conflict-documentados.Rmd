@@ -158,10 +158,10 @@ desaparecida de forma "forzada" (`forced_dis` == TRUE) o no (`forced_dis` == FAL
 
 También contamos con otros argumentos: 6) **edad_minors_filter** que filtra por 
 víctimas menores de edad (`edad_minors_filter` = TRUE) documentadas por los 
-proyectos y/o instituciones; 7) **include_props** que permite incluir el cálculo 
-de las proporciones para las variables de interés (`include_props` = TRUE); 
-8) **include_props_na** que permite incluir la proporción de NA's en la tabla 
-(`prop_obs_na` = TRUE). Cabe aclarar que el número de digitos por defecto es = 2.
+proyectos y/o instituciones y 7) **include_props** que permite incluir el cálculo 
+de las proporciones (incluyendo -si contiene- los NA) para las variables de 
+interés (`include_props` = TRUE). Cabe aclarar que el número de digitos por 
+defecto es = 2.
 
 ```{r combine-observed, echo = TRUE}
 
@@ -171,8 +171,7 @@ tabla_documentada <- verdata::summary_observed("homicidio",
                                                conflict_filter = FALSE,
                                                forced_dis_filter = FALSE,
                                                edad_minors_filter = FALSE,
-                                               include_props = FALSE,
-                                               include_props_na = FALSE)
+                                               include_props = FALSE)
 
 paged_table(tabla_documentada, options = list(rows.print = 4, cols.print = 4))
 
