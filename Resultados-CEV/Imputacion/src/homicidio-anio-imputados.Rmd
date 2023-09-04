@@ -174,7 +174,7 @@ tabla_combinada <- verdata::combine_replicates("homicidio",
                                                 replicas_filtradas, 
                                                 strata_vars = "yy_hecho",
                                                 conflict_filter = TRUE,
-                                                forced_dis_filter = TRUE,
+                                                forced_dis_filter = FALSE,
                                                 edad_minors_filter = FALSE,
                                                 include_props = FALSE)
 

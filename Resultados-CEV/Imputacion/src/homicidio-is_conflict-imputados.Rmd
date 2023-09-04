@@ -136,6 +136,10 @@ esta misma variable (con la función `summary_observed`). Esta información
 
 tabla_documentada <- arrow::read_parquet(here::here("Resultados-CEV/Documentados/output-documentados/homicidio-is_conflict-documentado.parquet"))
 
+tabla_documentada <- tabla_documentada %>% 
+  mutate(is_conflict = as.logical(is_conflict)) %>% 
+  mutate(is_conflict = as.integer(is_conflict))
+
 paged_table(tabla_documentada, options = list(rows.print = 10, cols.print = 5))
 
 ```
