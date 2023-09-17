@@ -11,84 +11,30 @@ HERE := $(shell git rev-parse --show-toplevel)
 .PHONY: clean all
 
 all: \
-	output/reclutamiento-anio-estratificacion.html	\
-	output/secuestro-anio_sexo-estratificacion.html	\
-	output/secuestro-edad_c-estratificacion.html \
-	output/secuestro-is_conflict-estratificacion.html \
-	output/secuestro-etnia-estratificacion.html \
-	output/secuestro-departamento-estratificacion.html\
-	output/secuestro-macrorregion_cev-estratificacion.html\
-	output/secuestro-perpetrador-estratificacion.html	\
-	output/homicidio-anio-estratificacion.html	\
+	output/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.html	\
 	output/homicidio-sexo-estratificacion.html \
 	output/homicidio-edad-estratificacion.html \
 	output/homicidio-etnia-estratificacion.html \
 	output/homicidio-departamento-estratificacion.html \
-	output/homicidio-macrorregion_cev-estratificacion.html	\
-	output/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.html	\
-	output/desaparicion-sexo-estratificacion.html \
-	output/desaparicion-edad_c-estratificacion.html	\
-	output/desaparicion-etnia-estratificacion.html	\
-	output/desaparicion-departamento-estratificacion.html	\
-	output/desaparicion-macrorregion_cev-estratificacion.html \
-	output/desaparicion-perpetrador-estratificacion.html
-	
+	output/homicidio-macrorregion_cev-estratificacion.html \
+	output/homicidio-yy_hecho-estimacion-combinacion.html	\
+	output/homicidio-sexo-estimacion-combinacion.html	\
+	output/homicidio-edad-estimacion-combinacion.html	\
+	output/homicidio-etnia-estimacion-combinacion.html	\
+	output/homicidio-departamento-estimacion-combinacion.html	\
+	output/homicidio-macrorregion_cev-estimacion-combinacion.html	\
+	output/homicidio-is_conflict-estimacion-combinacion.html	\
+	output/homicidio-perpetrador-estimacion-combinacion.html
+
+
 clean:
 	rm output/*
 
-output/reclutamiento-anio-estratificacion.html: \
-		src/reclutamiento-anio-estratificacion.Rmd
+output/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.html: \
+		src/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-				mv src/reclutamiento-anio-estratificacion.html output/
-
-output/secuestro-anio_sexo-estratificacion.html: \
-		src/secuestro-anio_sexo-estratificacion.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-				mv src/secuestro-anio_sexo-estratificacion.html output/
-
-output/secuestro-edad_c-estratificacion.html: \
-		src/secuestro-edad_c-estratificacion.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-				mv src/secuestro-edad_c-estratificacion.html output/
-
-output/secuestro-is_conflict-estratificacion.html: \
-		src/secuestro-is_conflict-estratificacion.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-				mv src/secuestro-is_conflict-estratificacion.html output/
-
-output/secuestro-etnia-estratificacion.html: \
-		src/secuestro-etnia-estratificacion.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-				mv src/secuestro-etnia-estratificacion.html output/
-
-output/secuestro-departamento-estratificacion.html: \
-		src/secuestro-departamento-estratificacion.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-				mv src/secuestro-departamento-estratificacion.html output/
-
-output/secuestro-macrorregion_cev-estratificacion.html: \
-		src/secuestro-macrorregion_cev-estratificacion.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-				mv src/secuestro-macrorregion_cev-estratificacion.html output/
-
-output/secuestro-perpetrador-estratificacion.html:	\
-	src/secuestro-perpetrador-estratificacion.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-				mv src/secuestro-perpetrador-estratificacion.html output/
-
-output/homicidio-anio-estratificacion.html: \
-		src/homicidio-anio-estratificacion.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-				mv src/homicidio-anio-estratificacion.html output/
+				mv src/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.html output/
 
 output/homicidio-sexo-estratificacion.html: \
 		src/homicidio-sexo-estratificacion.Rmd
@@ -120,45 +66,54 @@ output/homicidio-macrorregion_cev-estratificacion.html: \
 		Rscript -e "rmarkdown::render('$<')"
 				mv src/homicidio-macrorregion_cev-estratificacion.html output/
 
-output/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.html: \
-		src/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.Rmd
-	-mkdir output
-		Rscript -e "rmarkdown::render('$<')"
-				mv src/homicidio-yy_hecho_is_conflict_perpetrador-estratificacion.html output/
+# Estimaciones
 
-output/desaparicion-sexo-estratificacion.html: \
-		src/desaparicion-sexo-estratificacion.Rmd
+output/homicidio-yy_hecho-estimacion-combinacion.html: \
+		src/homicidio-yy_hecho-estimacion-combinacion.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-				mv src/desaparicion-sexo-estratificacion.html output/
+				mv src/homicidio-yy_hecho-estimacion-combinacion.html output/
 
-output/desaparicion-edad_c-estratificacion.html: \
-		src/desaparicion-edad_c-estratificacion.Rmd
+output/homicidio-sexo-estimacion-combinacion.html: \
+		src/homicidio-sexo-estimacion-combinacion.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-				mv src/desaparicion-edad_c-estratificacion.html output/
+				mv src/homicidio-sexo-estimacion-combinacion.html output/
 
-output/desaparicion-etnia-estratificacion.html: \
-		src/desaparicion-etnia-estratificacion.Rmd
+output/homicidio-edad-estimacion-combinacion.html: \
+		src/homicidio-edad-estimacion-combinacion.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-				mv src/desaparicion-etnia-estratificacion.html output/
+				mv src/homicidio-edad-estimacion-combinacion.html output/
 
-output/desaparicion-departamento-estratificacion.html: \
-		src/desaparicion-departamento-estratificacion.Rmd
+output/homicidio-etnia-estimacion-combinacion.html: \
+		src/homicidio-etnia-estimacion-combinacion.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-				mv src/desaparicion-departamento-estratificacion.html output/
+				mv src/homicidio-etnia-estimacion-combinacion.html output/
 
-output/desaparicion-macrorregion_cev-estratificacion.html: \
-		src/desaparicion-macrorregion_cev-estratificacion.Rmd
+output/homicidio-departamento-estimacion-combinacion.html: \
+		src/homicidio-departamento-estimacion-combinacion.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-				mv src/desaparicion-macrorregion_cev-estratificacion.html output/
+				mv src/homicidio-departamento-estimacion-combinacion.html output/
 
-output/desaparicion-perpetrador-estratificacion.html: \
-		src/desaparicion-perpetrador-estratificacion.Rmd
+output/homicidio-macrorregion_cev-estimacion-combinacion.html: \
+		src/homicidio-macrorregion_cev-estimacion-combinacion.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
-				mv src/desaparicion-perpetrador-estratificacion.html output/
+				mv src/homicidio-macrorregion_cev-estimacion-combinacion.html output/
+
+output/homicidio-is_conflict-estimacion-combinacion.html: \
+		src/homicidio-is_conflict-estimacion-combinacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/homicidio-is_conflict-estimacion-combinacion.html output/
+
+output/homicidio-perpetrador-estimacion-combinacion.html: \
+		src/homicidio-perpetrador-estimacion-combinacion.Rmd
+	-mkdir output
+		Rscript -e "rmarkdown::render('$<')"
+				mv src/homicidio-perpetrador-estimacion-combinacion.html output/
+
 # Done

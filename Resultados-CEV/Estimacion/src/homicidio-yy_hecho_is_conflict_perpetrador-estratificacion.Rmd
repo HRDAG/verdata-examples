@@ -122,7 +122,7 @@ ocurridos dentro del marco del conflicto armado (is_conflict == 1).
 
 replicas_estratos <- verdata::filter_standard_cev(replicas_datos,
                                                    "homicidio", 
-                                                   perp_change = TRUE) %>% 
+                                                   perp_change = FALSE) %>% 
   dplyr::mutate(is_conflict = as.integer(is_conflict)) %>%
   dplyr::filter(is_conflict == 1)
 
@@ -193,7 +193,7 @@ A continuación se aplica la función:
 
 ```{r stratify-continuacion, echo = TRUE}
 
-schema <- ("replica,yy_hecho,p_str,is_conflict")
+schema <- ("replica,yy_hecho,p_str")
 
 listas <- stratify(replicas_estratos, schema)
 
@@ -202,7 +202,7 @@ listas <- stratify(replicas_estratos, schema)
 El paso anterior muestra la forma en la que aplicamos la función. Considerando 
 que en este ejemplo queremos estimar el número de víctimas de la presente violación
 por la(s) variable(s) nombrada(s), la estratificación se hace por la(s) variable(s) 
-**yy_hecho**, **p_str** e **is_conflict** para cada réplica. El objeto **schema** contiene una 
+**yy_hecho** y **p_str** para cada réplica. El objeto **schema** contiene una 
 cadena de caracteres con los nombres de las variables en el *data frame*. Luego, 
 como se mencionó, usamos la tabla **replicas_estratos** como primer argumento y el 
 objeto **schema** como segundo. Lo que obtenemos es lo siguiente:

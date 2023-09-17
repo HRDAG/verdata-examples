@@ -203,7 +203,7 @@ A continuación se aplica la función:
 
 ```{r stratify-continuacion, echo = TRUE}
 
-schema <- ("replica,yy_hecho,edad_c")
+schema <- ("replica,yy_hecho,edad_categoria")
 
 listas <- stratify(replicas_estratos, schema)
 

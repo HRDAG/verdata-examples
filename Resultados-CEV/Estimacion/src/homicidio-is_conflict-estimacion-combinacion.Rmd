@@ -1,0 +1,68 @@
+---
+title: "Proceso estimación y combinación"
+subtitle: "Total de víctimas vinculadas al conflicto armado - 1985–2018"
+output:
+  rmdformats::robobook:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+    gallery: true
+    use_bookdown: true
+    highlight: kate
+    embed_fonts: false
+knit: (function(inputFile, encoding) {rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output") })
+---
+
+```{r setup, echo = TRUE,include = FALSE}
+
+pacman::p_load(ggplot2, dplyr, rmarkdown, verdata, LCMCR, here,
+               arrow, dplyr, rlang, purrr, glue, tidyr, stringr, 
+               gridExtra)
+
+options(warn = -1)
+```
+
+```{r numbers, include = FALSE}
+
+myNum <- function(n) {
+  return(prettyNum(n, big.mark = " "))
+}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+```
+
+```{r library, include=TRUE}
+
+library(verdata)
+
+```
+
+## Introducción {-}
+
+Si es su primera vez trabajando con los datos, no está muy familiarizado con el 
+paquete o simplemente quiere conocer más sobre el proyecto y el objetivo de 
+estos ejemplos y el paquete `verdata`, consulte:
+https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducción.html 
+antes de continuar. 
+
+En este ejemplo, se ilustrará el proceso de estimación del total de víctimas 
+vinculadas al conflicto armado (1985–2018).
+
+## Importando resultados estimación {-}
+
+Como se indicó en el documento sobre estratificación por año, perpetrador y la 
+variable de "pertenece al conflicto", no hubo necesidad de realizar otros tipos 
+de estratificación para la estimación del subregistro de víctimas desagregadas 
+por estas variables. Por ende, en este y en el documento de la estimación del 
+total de víctimas vinculadas al conflicto armado (por perpetrador) solo 
+procederemos a importar las estimaciones procedentes del [documento](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/output/homicidio-yy_hecho-estimacion-combinacion.html):
+
+```{r leer-estimacion, echo = TRUE}
+ 
+estimacion <- arrow::read_parquet(here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-is_conflict-perpetrador-homicidio.parquet"))
+ 
+
+```
+

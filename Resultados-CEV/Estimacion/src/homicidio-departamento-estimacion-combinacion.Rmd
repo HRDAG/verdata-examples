@@ -1,0 +1,145 @@
+---
+title: "Proceso estimación y combinación"
+subtitle: "Víctimas de homicidio desagregadas por departamento - 1985–2018"
+output:
+  rmdformats::robobook:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+    gallery: true
+    use_bookdown: true
+    highlight: kate
+    embed_fonts: false
+knit: (function(inputFile, encoding) {rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output") })
+---
+
+```{r setup, echo = TRUE,include = FALSE}
+
+pacman::p_load(ggplot2, dplyr, rmarkdown, verdata, LCMCR, here,
+               arrow, dplyr, rlang, purrr, glue, tidyr, stringr, 
+               gridExtra)
+
+options(warn = -1)
+```
+
+```{r numbers, include = FALSE}
+
+myNum <- function(n) {
+  return(prettyNum(n, big.mark = " "))
+}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+```
+
+```{r library, include=TRUE}
+
+library(verdata)
+
+```
+
+## Introducción {-}
+
+Si es su primera vez trabajando con los datos, no está muy familiarizado con el 
+paquete o simplemente quiere conocer más sobre el proyecto y el objetivo de 
+estos ejemplos y el paquete `verdata`, consulte:
+https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducción.html 
+antes de continuar. 
+
+En este ejemplo, se ilustrará el proceso de estimación del total de víctimas 
+vinculadas al conflicto armado por departamento (1985–2018). 
+
+## Importando resultados estratificación {-}
+
+En este [ejemplo](https://github.com/HRDAG/CO-examples/blob/main/Resultados-CEV/Estimacion/homicidio-anio-estratificacion.html) se evidenció el proceso para la estratificación en la 
+que agrupamos víctimas con características similares. Teniendo este insumo
+procedimos a guardar los resultados en nuestra maquina local o computador. 
+En este ejemplo retomaremos dicho input para continuar con el siguiente paso que 
+es -precisamente- la estimación:
+
+```{r open-estratify, echo = TRUE}
+
+listas <- readRDS(here::here("Resultados-CEV/Estimacion/output-estimacion/quinquenio-departamento-homicidio.rds"))
+```
+
+## Estimación víctimas {-}
+
+Ahora, definidos los estratos, se calculan las estimaciones para 
+esta violación en particular; para este paso se usa la función `mse` del paquete 
+`verdata`. Esta función permite preparar los datos, revisar si hay estimaciones 
+precalculadas para ese estrato y estimar (en caso de que no las haya). 
+Como se indicó al principio, esta función tomará como insumo la información de 
+las fuentes, es decir, aquellas columnas que comienzan por `in_`. También filtra 
+por fuentes válidas, es decir, las fuentes que cuentan con al menos una víctima 
+en ese estrato. Para que un estrato sea estimable, se requiere un mínimo de 3 
+fuentes válidas. Si un estrato no es estimable la función arrojará `NA`. 
+
+Como se mencionó, considerando que el proceso de estimación toma tiempo y
+recursos computacionales, esta función le permite usar estimaciones ya calculadas en el 
+proyecto. Para esto, usted debe descargar las estimaciones publicadas [acá](https://www.comisiondelaverdad.co/analitica-de-datos-informacion-y-recursos#c3).
+
+
+```{r mse-function, eval = FALSE}
+
+mse(
+  stratum_data,
+  stratum_name,
+  estimates_dir = NULL,
+  min_n = 1,
+  K = NULL,
+  buffer_size = 10000,
+  sampler_thinning = 1000,
+  seed = 19481210,
+  burnin = 10000,
+  n_samples = 10000,
+  posterior_thinning = 500
+)
+
+```
+
+Algunos de los argumentos de esta función se explican de la siguiente 
+forma^[Puede obtener más información de la función de `mse` escribiendo en la 
+consola de R: ?mse.]
+
+- `stratum_data`: Data frame que incluye la información del estrato de interés 
+(*data frame*s que creamos antes).
+
+- `stratum_name`: Es el nombre del estrato.
+
+- `estimates_dir`: Es la ruta (opcional) o el *path* de la carpeta o archivo 
+que contiene las estimaciones precalculadas. Esto le permite a la función buscar 
+entre las estimacines si el estrato que usted quiere analizar ya fue estimado. 
+
+```{r estimaciones-files, echo = TRUE}
+
+estimaciones_dir <- here::here("estimaciones")
+
+```
+
+Al final el resultado será un *data frame* con cinco columnas: una columna 
+que indica si el estrato es válido o no (`TRUE` o `FALSE`); el número de muestras
+`N` de la distribución posterior (`NA` si el estrato no es válido); las fuentes
+válidas que se usaron en la estimación `valid_sources`; el número de observaciones
+de las listas que son válidas del estrato (`n_obs`) y el nombre del estrato 
+`stratum_name`. Si un estrato es estimable, este dataframe va a contener 1000
+muestras para cada estrato. Esto lo ilustramos a continuación.
+
+```{r estimaciones, echo = TRUE}
+
+estimacion <- purrr::map2_dfr(.x = listas$strata_data,
+                              .y = listas$stratification_vars,
+                              .f = verdata::mse,
+                              estimates_dir = estimaciones_dir)
+
+paged_table(estimacion, options = list(rows.print = 10, cols.print = 8))
+
+```
+
+```{r transformacion-mse, echo = TRUE}
+
+arrow::write_parquet(estimacion,
+                      here::here("Resultados-CEV/Estimacion/output-estimacion/quinquenio-departamento-homicidio.parquet"))
+ 
+``` 
+
