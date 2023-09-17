@@ -108,24 +108,6 @@ Sin embargo, para centrarnos en un análisis más específico, tal como el reali
 para el informe metodológico, procederemos a transformar y/o filtrar 
 algunas variables. 
 
-## Filtrando las réplicas acorde con el filtro del informe metodológico {-}
-
-La función `filter_standard_cev` nos permite transformar o filtrar la
-información. Por ejemplo, aquellas víctimas que se documentaron como víctimas 
-de la ex-guerrilla FARC-EP en años posteriores a 2016 pasaron a ser víctimas de 
-otras guerrillas, ya que este primer grupo oficialmente dejó de existir después 
-de dicho año (`perp_change` = TRUE)
-
-```{r filter-cev, echo = TRUE}
-
-replicas_filtradas <- verdata::filter_standard_cev(replicas_datos,
-                                                   "desaparicion", 
-                                                   perp_change = TRUE)
-
-paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
-
-```
-
 ## Víctimas documentadas {-}
 
 Después de aplicados los filtros necesarios con la función anterior, es momento 
@@ -158,7 +140,7 @@ defecto es 2).
 ```{r combine-observed, echo = TRUE}
 
 tabla_documentada <- verdata::summary_observed("desaparicion",
-                                               replicas_filtradas, 
+                                               replicas_datos, 
                                                strata_vars = "yy_hecho",
                                                conflict_filter = TRUE,
                                                forced_dis_filter = TRUE,
@@ -224,7 +206,7 @@ resultados (que por defecto es 2).
 
 tabla_combinada <- verdata::combine_replicates("desaparicion",
                                                 tabla_documentada,
-                                                replicas_filtradas, 
+                                                replicas_datos, 
                                                 strata_vars = "yy_hecho",
                                                 conflict_filter = TRUE,
                                                 forced_dis_filter = TRUE,
