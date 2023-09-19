@@ -154,11 +154,7 @@ Para otras violaciones este argumento siempre será FALSE.
 También contamos con otros argumentos: 6) **edad_minors_filter** que filtra por 
 víctimas menores de edad (`edad_minors_filter` = TRUE) documentadas por los 
 proyectos y/o instituciones; 7) **include_props** que permite incluir el cálculo 
-de las proporciones para las variables de interés (`include_props` = TRUE); 
-8) **prop_obs_na** que permite incluir la proporción de NA's en la tabla 
-(`prop_obs_na` = TRUE) y 9) **digits** que es un argumento opcional en el cual 
-podemos establecer el número de dígitos para redondear los resultados (que por
-defecto es 2).
+de las proporciones para las variables de interés (`include_props` = TRUE).
 
 ```{r combine-observed, echo = TRUE}
 
@@ -168,8 +164,7 @@ tabla_documentada <- verdata::summary_observed("reclutamiento",
                                                conflict_filter = TRUE,
                                                forced_dis_filter = FALSE,
                                                edad_minors_filter = TRUE,
-                                               include_props = TRUE,
-                                               prop_obs_na = TRUE)
+                                               include_props = TRUE)
 
 paged_table(tabla_documentada, options = list(rows.print = 4, cols.print = 4))
 
@@ -248,35 +243,8 @@ proceso de estimación del subregistro de víctimas.
 Con el fin de controlar la heterogeneidad  en las probabilidades de captura 
 (ver más de este concepto en el [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag)) se 
 estratifica la información de acuerdo al análisis a realizar. En este caso, 
-como queremos estimar el subregistro de desaparición por año, se estratifica 
-por año del hecho. Para empezar, creamos nuevas variables que serán útiles 
-para el análisis.
-
-
-```{r estratificacion, echo = TRUE}
-
-replicas_estratos <- replicas_filtradas %>% 
-    dplyr::mutate(periodo_pres = case_when(yy_hecho >= 1990 & yy_hecho <= 1993 ~ "1990_1993",
-                                           yy_hecho >= 1994 & yy_hecho <= 1997 ~ "1994_1997",
-                                           yy_hecho >= 1998 & yy_hecho <= 2001 ~ "1998_2001",
-                                           yy_hecho >= 2002 & yy_hecho <= 2005 ~ "2002_2005",
-                                           yy_hecho >= 2006 & yy_hecho <= 2009 ~ "2006_2009",
-                                           yy_hecho >= 2010 & yy_hecho <= 2013 ~ "2010_2013",
-                                           yy_hecho >= 2014 & yy_hecho <= 2017 ~ "2014_2017",
-                                           TRUE ~ NA_character_)) %>%
-    dplyr::mutate(etnia2 = case_when(etnia %in% c('MESTIZO') ~ "MESTIZO",
-                                     etnia %in% c('INDIGENA','NARP','ROM') ~ "ETNICO",
-                                     TRUE ~ NA_character_)) %>%
-    assertr::verify(!is.na(periodo_pres)) %>%
-    assertr::verify(!is.na(etnia2)) %>%
-    assertr::verify(!is.na(sexo))
-
-
-paged_table(replicas_estratos, options = list(rows.print = 10, cols.print = 5))
-
-```
-
-Seguido de esto se estratifica. Es importante que usted como usuario 
+como queremos estimar el subregistro de reclutamiento por sexo, se estratifica por 
+etnia, sexo y periodo presidencial. Es importante que usted como usuario 
 vea que este proceso es netamente artesanal, es decir, usted puede usar su propio
 código o funciones para realizar este proceso que, en nuestro caso, será a través
 de una función previamente creada (fuera del paquete `verdata`) para facilitar 
@@ -333,23 +301,15 @@ A continuación se aplica la función:
 
 ```{r estratificacion-continuacion, echo = TRUE}
 
-replicas <- paste0("R", 1:10)
-resultados <- list()
+schema <- ("replica,periodo_pres,etnia2,sexo")
 
-for (replica in replicas) {
-  strata_data <- replicas_estratos[replicas_estratos$replica == replica, ]
-
-  var <- "sexo"
-  strata <- stratify(strata_data, c("periodo_pres,etnia2", var, sep = ","))
-  
-  resultados[[replica]] <- strata
-}
+listas <- stratify(replicas_filtradas, schema)
 
 ```
 
 ```{r estratificacion-continuacion2, echo = TRUE}
 
-replica6_grupo6 <- resultados[["R6"]][["strata_data"]][[6]]
+replica6_grupo6 <- listas[["strata_data"]][[6]]
 
 paged_table(replica6_grupo6, options = list(rows.print = 10, cols.print = 5))
 
@@ -357,7 +317,7 @@ paged_table(replica6_grupo6, options = list(rows.print = 10, cols.print = 5))
 
 ```{r estratificacion-continuacion3, echo = TRUE}
 
-replica6_grupo6_estrato <- resultados[["R6"]][["stratification_vars"]][[6]]
+replica6_grupo6_estrato <- listas[["stratification_vars"]][[6]]
 
 paged_table(replica6_grupo6_estrato, options = list(rows.print = 10, cols.print = 5))
 
@@ -424,38 +384,32 @@ muestras para cada estrato. Esto lo ilustramos a continuación.
 
 ```{r estimaciones, echo = TRUE}
 
-estimaciones <- list() 
+estimacion <- purrr::map2_dfr(.x = listas$strata_data,
+                              .y = listas$stratification_vars,
+                              .f = verdata::mse,
+                              estimates_dir = estimaciones_dir)
 
-for (replica in replicas) {
-    
-    strata_data <- resultados[[replica]]$strata_data
-    stratification_vars <- resultados[[replica]]$stratification_vars
-    
-    estimate_mse <- map2_dfr(.x = strata_data,
-                             .y = stratification_vars,
-                             .f = ~ {
-                               mse <- verdata::mse(stratum_data = .x,
-                                                   stratum_name = .y,
-                                                   estimates_dir = estimaciones_dir)
-                               mse$replica <- replica
-                               mse
-                           })
-    
-    estimaciones[[replica]] <- estimate_mse
-}
 
-union_mse <- do.call(rbind, estimaciones)
+paged_table(estimacion, options = list(rows.print = 10, cols.print = 8))
 
-union_mse <- union_mse %>%
-    mutate(stratum_name = paste(pull(stratum_name, 1),
-                                pull(stratum_name, 2),
-                                pull(stratum_name,3),
-                                sep = "-"))
-
-paged_table(union_mse, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
+```{r estimaciones-continuacion}
+
+estimacion <- estimacion %>% 
+    mutate(stratum_name = paste(pull(stratum_name, 1),
+                                pull(stratum_name, 2),
+                                pull(stratum_name,3),
+                                pull(stratum_name,4),
+                                sep = "-")) %>% 
+    separate(stratum_name, into = c("replica", "periodo_pres", "etnia2", "sexo"), 
+             sep = "-", remove = FALSE, extra = "merge") %>% 
+    rename(replicate = replica)
+
+paged_table(estimacion, options = list(rows.print = 10, cols.print = 8))
+
+```
 Estos son los resultados de `mse`. Vemos las cinco (5) primeras columnas 
 mencionadas en el que cabe destacar que todos los estratos son válidos, 
 es decir, no vemos ningún _NA_ en nuestras columnas; lo que indica que en 
@@ -467,8 +421,8 @@ posterior de la cantidad de víctimas probables para cada estrato y réplica
 
 ```{r estimaciones-ejemplo, echo = TRUE}
 
-union_mse_summary <- union_mse %>% 
-    filter(replica == "R1") %>% 
+union_mse_summary <- estimacion %>% 
+    filter(replicate == "R1") %>% 
     group_by(stratum_name) %>% 
     summarize(N_estimaciones = n())
 
@@ -486,9 +440,9 @@ para _N_. Para esto tomaremos -por ejemplo- la réplica 1 (*R1*) y el estrato
 
 ```{r densidad-ejemplo, echo = TRUE, comment = NA, message= FALSE, warning = FALSE}
 
-tabla_grafica <- union_mse %>% 
-    filter(replica == "R1") %>% 
-    filter(stratum_name == "1998_2001-ETNICO-HOMBRE") 
+tabla_grafica <- estimacion %>% 
+    filter(replicate == "R1") %>% 
+    filter(stratum_name == "R1-1998_2001-ETNICO-HOMBRE") 
 
 densidad_graph <- tabla_grafica %>% 
     ggplot() +
@@ -520,16 +474,13 @@ No obstante, vemos que hay varianza (pero no considerable), es decir una mayor
 Nuestro último paso es combinar nuestras estimaciones. Esto lo haremos a través 
 de nuestra función `combine_estimates` el cual permite obtener los intervalos 
 creibles (no de confianza). Pero antes, debemos realizar una pequeña transformación
-a nuestra anterior tabla `union_mse`, esto con el fin de obtener nuestros
+a nuestra anterior tabla `estimacion`, esto con el fin de obtener nuestros
 resultados desagregados por sexo (y proceder luego a combinar). Esto lo 
 presentaremos a continuación:
 
 ```{r combinacion-transformacion, echo = TRUE}
 
-tabla_sampler <- union_mse %>%
-    separate(stratum_name, into = c("periodo_pres", "etnia2", "sexo"), 
-             sep = "-", remove = FALSE) %>% 
-    rename(replicate = replica) %>% 
+tabla_sampler <- estimacion %>%
     group_by(stratum_name, replicate) %>% 
     mutate(sample_number = glue("sample_{row_number()}")) %>% 
     pivot_wider(id_cols = c("replicate", "stratum_name", "sexo", "n_obs"),
@@ -540,12 +491,8 @@ paged_table(tabla_sampler, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
-En primera instancia vemos que la función `separate` del paquete `tidyr` nos 
-separa la columna de `stratum_name` en tres (3) nuevas columnas: `periodo_pres`,
-`etnia2` y `sexo`, luego agrupamos por nuestra columna `stratum_name` y cada una
-de nuestras 10 réplicas. 
-
-Adicionalmente generamos una columna denominada `sample_number` en el que 
+En primera instancia vemos que grupamos por nuestra columna `stratum_name` y cada una
+de nuestras 10 réplicas. Adicionalmente generamos una columna denominada `sample_number` en el que 
 *{row_number()}* corresponde a cada fila de *N*. Es decir, articulando esto con
 nuestra siguiente línea de código, vemos que `pivot_wider` convierte nuestro 
 dataframe de un formato largo a ancho, o, en otras palabras, los valores que 
@@ -609,7 +556,7 @@ final_agrupacion <- sexo_group %>%
 
 estimates_tabla_sexo <- final_agrupacion %>%
     group_split() %>%
-    map_dfr(.f = combine_estimates) %>%
+    map_dfr(.f = verdata::combine_estimates) %>%
     mutate(est_lo_p = round(N_025/sum(N_mean), digits = 2)) %>%
     mutate(est_lo_p = ifelse(est_lo_p < 0, 0, est_lo_p)) %>%
     mutate(est_mn_p = round(N_mean/sum(N_mean), digits = 2)) %>%
