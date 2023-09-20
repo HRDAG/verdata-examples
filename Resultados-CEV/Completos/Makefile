@@ -21,11 +21,13 @@ output/general-desaparicion-anio.html: \
 		src/general-desaparicion-anio.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
+		mv src/general-desaparicion-anio.html output/
 
 output/general-reclutamiento-sexo.html: \
 		src/general-reclutamiento-sexo.Rmd
 	-mkdir output
 		Rscript -e "rmarkdown::render('$<')"
+		mv src/general-reclutamiento-sexo.html output/
 
 
 # Done

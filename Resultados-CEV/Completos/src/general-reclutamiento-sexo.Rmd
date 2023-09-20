@@ -389,7 +389,6 @@ estimacion <- purrr::map2_dfr(.x = listas$strata_data,
                               .f = verdata::mse,
                               estimates_dir = estimaciones_dir)
 
-
 paged_table(estimacion, options = list(rows.print = 10, cols.print = 8))
 
 
