@@ -389,13 +389,7 @@ estimacion <- purrr::map2_dfr(.x = listas$strata_data,
                               .f = verdata::mse,
                               estimates_dir = estimaciones_dir)
 
-paged_table(estimacion, options = list(rows.print = 10, cols.print = 8))
-
-
-```
-
-```{r estimaciones-continuacion}
-
+# Separar variables
 estimacion <- estimacion %>% 
     mutate(stratum_name = paste(pull(stratum_name, 1),
                                 pull(stratum_name, 2),
@@ -404,11 +398,16 @@ estimacion <- estimacion %>%
                                 sep = "-")) %>% 
     separate(stratum_name, into = c("replica", "periodo_pres", "etnia2", "sexo"), 
              sep = "-", remove = FALSE, extra = "merge") %>% 
-    rename(replicate = replica)
+    rename(replicate = replica) %>% 
+    select(validated, N, valid_sources, n_obs, stratum_name, replicate, periodo_pres, etnia2, sexo)
+    
+
 
 paged_table(estimacion, options = list(rows.print = 10, cols.print = 8))
 
+
 ```
+
 Estos son los resultados de `mse`. Vemos las cinco (5) primeras columnas 
 mencionadas en el que cabe destacar que todos los estratos son válidos, 
 es decir, no vemos ningún _NA_ en nuestras columnas; lo que indica que en 
