@@ -31,14 +31,16 @@ To introduce these concepts, it is important to remember that the project was di
 
 The observed data refer to victims' whose information was documented in the integrated database, the database that was created after combining and de-duplicating the records from more than 100 databases provided by numerous institutions in Colombia. Not all victims documented in the integrated database had complete information such as their sex, age, or information about the perpetrator presumed to have committed the human rights abuse, among other fields. For the victims where this information was missing, there is uncertainty about how these missing fields should be filled in.   
 
-**B. Imputed fields**
+**B. Imputing missing fields in documented records**
 
 We used a statistical method called multiple imputation to address the issue of missing information in the documented records. This method allows us to generate multiple versions of the integrated database with the missing information filled in showing the *possible* values that fields such as the age and ethnicity of the victim or the presumed perpetrator of the abuse among others. We call these observations imputed fields or imputed data (statistically speaking; this should not to be confused with imputation in legal terms). We repeated the process of statistically imputing the missing fields in documented records 100 times, or replicates, for each human rights violation. You can think of each replicate as a different version of the data. For example, if the record of Victim 1 did not have information about their ethnicity, the imputation model may have assigned the value to Indigenous in Replicate 1, mestizo in Replicate 2, Indigenous again in Replicate 3, etc. Let's assume that at the end of the process, we observe that the imputation model assigned the victim's ethnicity to Indigenous 54 times, mestizo 30 times, and NARP (Black, Afro-Colombian, Raizales, and Palenqueras) 16 times. We are not sure of the real ethnicity of this victim because it was not documented, however, we observe the most likely value according to the imputation model. In this case, the most probable value for this missing field is Indigenous (see the [methodological report](https://hrdag.org/wp-content/uploads/2022/08/20220818-fase4-informe-corrected.pdf) for more information about this model).
 
-**C. Estimation of underreporting**
+**C. Estimating underreporting**
 
 While many victims were documented in the integrated database, it's important to remember that none of the databases included in the joint project nor the integrated database document *all* conflict victims. There are still victims' whose stories have not been documented by any of the data sources included in the project, what we refer to as underreporting or underdocumentation. We use another statistical model called multiple systems estimation to address this underreporting (see the [methodological report](https://hrdag.org/wp-content/uploads/2022/08/20220818-fase4-informe-corrected.pdf) for more information).
 
 ## Conclusion {-}
+
+The functions in `verdata` allow users to calculate relevant statistics for all phases of the project. Users can calculate the number of documented victims and the proportions of missing information prior to imputation, the results of the statistical imputation of missing fields, and the estimation of underreporting. Additionally, these functions allow users to propagate the uncertainty related to statistical imputation of missing fields into the final estimates of the total number of victims, including those that were never documented by any of the data sources included in this project, for the strata being analyzed.
 
 <!-- done. -->
