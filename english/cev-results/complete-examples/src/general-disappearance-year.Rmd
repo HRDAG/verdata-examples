@@ -321,3 +321,169 @@ stratify <- function(replicate_data, schema) {
 
 ```
 
+The stratify function takes two arguments: (1) `replicate_data` the data to be
+stratified, in our case, the filtered dataframe `replicate_strata`; and (2)
+`schema`, a string with a list of variables to be used to stratify the dataframe
+separate by commas.
+
+`stratify` first groups the `replicate_data` dataframe by the variables specified
+in `schema` and then splits up the grouped dataframe into a list of data frames.
+Each element in the list refers to a single stratum. `stratify` returns a list.
+The first element, `strata_data` is this list of data frames and the second
+element, `stratification_vars` gives the specific combination of variable values 
+that defines each stratum.
+
+We can apply the function to our data in the following way:
+
+```{r stratify-continuation, echo = TRUE}
+
+schema <- ("replica,yy_hecho,is_forced_dis")
+
+stratification_results <- stratify(replicate_strata, schema)
+
+```
+
+Let's inspect the contents of the stratification a little more closely to better
+understand their contents. Here, I am going to focus on element `150` of the 
+results, which corresponds to enforced disappearances in the year 2006 as
+detailed by replicate 4 (`R4`).
+
+```{r stratify-continuation2, echo = TRUE}
+
+strata <- stratification_results[["strata_data"]]
+
+replicate4_2006 <- strata[[150]]
+
+paged_table(replicate4_2006, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+Now, let's inspect the corresponding element in the `stratification_vars` part
+of the result
+
+```{r stratify-continuation3, echo = TRUE}
+
+strata_names <- stratification_results[["stratification_vars"]]
+
+replicate4_2006_name <- strata_names[[150]]
+
+paged_table(replicate4_2006_name, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+# Estimating victims by year {-}
+
+Now that we've defined the strata we would like to estimate, we will use the
+`mse` function to do the estimation using multiple systems estimation. `mse`
+prepares the data to be used with the estimation functions in the `LCMCR` package,
+checks if there are pre-calculated estimates available for a stratum of interest,
+and fits the multiple systems estimation model if the stratum has not been
+pre-calculated (or the user doesn't want to use the pre-calculated estimates).
+
+The `mse` function takes a single stratum as an input and requires information
+about the sources that an individual was documented by, the columns prefixed by
+`in_`. `mse` filters these variables to include only valid lists, that is
+lists that documented at least one victim in the strata of interest. That means
+that `mse` will never include an `in_*` variable that takes only 0 values for
+estimation, even if the original strata had one or more variables with this
+structure. Additionally, `mse` only provides estimates in cases where there are
+at least 3 valid sources. If a stratum is not estimable, `mse` will return an
+`NA` value for the stratum.
+
+As previously mentioned, multiple systems estimation can be time and resource
+intensive. For this reason, the `mse` function allows users to make use of
+pre-calculated strata used for estimates from the technical appendix. You can
+download the published estimates [here](https://www.comisiondelaverdad.co/analitica-de-datos-informacion-y-recursos#c3).
+
+Let's now take a closer look at the arguments of the `mse` function.
+
+```{r mse-function, eval = FALSE}
+
+mse(
+  stratum_data,
+  stratum_name,
+  estimates_dir = NULL,
+  min_n = 1,
+  K = NULL,
+  buffer_size = 10000,
+  sampler_thinning = 1000,
+  seed = 19481210,
+  burnin = 10000,
+  n_samples = 10000,
+  posterior_thinning = 500
+)
+
+```
+
+For this example, we'll focus on three main arguments, but you can learn more
+about the rest of the arguments from the `R` help files for the package by writing
+`?mse` directly into the `R` console on your computer.
+
+- `stratum_data`: Data frame that includes data for the stratum of interest (
+previously created using the `stratify` function we created earlier).
+
+- `stratum_name`: A name to identify the stratum.
+
+- `estimates_dir`: An optional argument, that we will use for this tutorial today.
+This is the path to the directory where you have downloaded the pre-calculated
+estimates. When this argument is not `NULL`, `mse` will look for the pre-calculated
+estimates matching the stratum of interest in the `estimates_dir`.
+
+```{r estimtion-files, echo = TRUE}
+
+estimates_dir <- here::here("estimates")
+
+```
+
+After applying `mse` to our stratum of interest the output will be a data frame
+with five columns: (1) `validated`, which indicates whether the stratum was estimable `TRUE` if yes and `FALSE` if no; (2) `N`, samples from the posterior distribution of
+the probable total number of victims in the stratum, in the column (`NA`
+if the stratum was not estimable); (3) `valid_sources`, the sources that were
+used for the estimates; (4) `n_obs`, the number of victims documented by valid
+lists in the stratum; and (5) `stratum_name`, the name of the stratum. If the stratum
+is estimable, this data frame will have 1,000 rows, with 1 row per sample from
+the posterior distribution. If not, the sample will only have 1 row total and 
+the sample from the posterior distribution will be `NA`.
+
+```{r estimates, eval=FALSE}
+
+estimates <- purrr::map2_dfr(.x = stratification_results$strata_data,
+                              .y = stratification_results$stratification_vars,
+                              .f = verdata::mse,
+                              estimates_dir = estimates_dir)
+
+paged_table(estimates, options = list(rows.print = 10, cols.print = 8))
+
+```
+
+<!-- stopped here -->
+
+```{r transformation-mse, echo = FALSE, eval = FALSE}
+ 
+transformation <- estimates %>% 
+    mutate(replicate = stratum_name$replica,
+           stratum_name = paste(stratum_name$yy_hecho,sep = "-"))
+
+# TODO: FIXME
+arrow::write_parquet(transformation,
+                     here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-desaparicion.parquet"))
+ 
+``` 
+
+```{r open-estimates, echo = TRUE}
+
+estimacion_mse <- arrow::read_parquet(here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-desaparicion.parquet"))
+
+paged_table(estimacion_mse, options = list(rows.print = 10, cols.print = 8))
+
+```
+
+```{r combinacion-transformacion, echo = TRUE}
+
+tabla_final <- estimacion_mse %>%
+    rename(replicate = replica) %>% 
+    select(-validated, -valid_sources)
+
+paged_table(tabla_final, options = list(rows.print = 10, cols.print = 5))
+
+```
