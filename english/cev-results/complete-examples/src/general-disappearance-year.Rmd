@@ -1,0 +1,323 @@
+---
+title: "Statistical findings: documentd and imputed victims and estimation of under-registration"
+subtitle: "Enforced disappearance (1985-2016)"
+output:
+  rmdformats::robobook:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+    gallery: true
+    use_bookdown: true
+    highlight: kate
+    embed_fonts: false
+knit: (function(inputFile, encoding) {rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output") })
+---
+
+```{r setup, echo = TRUE, include = FALSE}
+
+pacman::p_load(ggplot2, dplyr, rmarkdown, LCMCR, here, arrow, dplyr, rlang, 
+               purrr, glue, tidyr, stringr, gridExtra)
+
+options(warn = -1)
+
+```
+
+```{r numbers, include = FALSE}
+
+myNum <- function(n) {
+  return(prettyNum(n, big.mark = " "))
+}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+```
+
+```{r library, include=TRUE}
+
+library(verdata)
+
+```
+
+## Introduction {-}
+
+If it's your first time working with the data, you are not familiar with the package
+or you simply want to know more about the project and the objectives of these examples
+and the `verdata` package, please review <!-- TODO: add link ---> before continuing.
+
+This example illustrates the process of calculating statistics about documented,
+imputed, and total victims of enforced disappearance by year. Specifically, it
+replicates the upper left-hand panel of the figure found on page 12 of the [technical appendix of the project](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag) (currently only available in Spanish).
+
+## Authenticating and importing the database (replicates) {-}
+
+We'll begin by authenticating and importing the data about disappearances using
+two functions from the `verdata` package: `confirm_files` and `read_replicates`.
+Authenticating the data is relevant because the data was published with a <!-- TODO: add license -->.
+This license allows the data to be distributed and modified by others. You could
+have accessed these data from a number of distinct sourse, so it's important
+to know whether the data have been modified.
+
+The function `confirm_files` authenticates the files that you have downloaded.
+Seeing as each violation type has 100 replicate files, this function authenticates
+the data without needing to read every file into `R`. This is to save computational
+resources or avoid unnecessary computation should you not want to use all 100
+replicates in your analysis. This function returns a data frame with two columns:
+the first column indicates the route to the fiel and the second indicates whether
+the contents of the file are the same as the published version. In instances where
+one or more of the files does not match the published version, the function will
+also return the message _"Some replicate file contents do not match the published versions"_.
+
+```{r confirm-replicates, eval=FALSE}
+
+confirm <- verdata::confirm_files(here::here("verdata-parquet/desaparicion"),
+                                  "desaparicion", c(1:10))
+
+```
+
+The function `read_replicates` allows the user to do two things: read the replicate
+files into `R` in a single data frame (whether using the `.csv` or `.parquet` versions)
+and verify that their contents are exactly the same as the publish data. When the
+`crash` argument is set to `TRUE` (the default value), `read_replicates` will onlyy
+return an object (a data frame) if the contents are equal. If the contents of any
+of the files differ, `read_replicates` will return the message _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_, meaning that any analyses done using these data
+may result in erroneous results. <!-- TODO: add more information about behavior" -->
+The data will not be read into `R`. If, for whatever reason, you want to read in
+the data despite differences with the published version, you an set `crash = FALSE`.
+In this case, the data will be read, but the warning will still appear. <!-- TODO: check, is this a message or a warning? -->
+
+```{r open-replicates, echo = TRUE}
+
+replicates_data <- verdata::read_replicates(here::here("verdata-parquet/desaparicion"),
+                                            "desaparicion", c(1:10))
+
+paged_table(replicates_data, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+After reading in replicates 1-10, we have `r myNum(nrow(replicates_data))` records.
+Additionally, we observe that the data contains information about the victim's
+age, sex, and ethnicity, the year and department where the violence took place, and
+the presumed perpetrator among other information. 
+
+We will begin our analysis of enforced disappearances by transforming and filtering
+this data to be suited to our question of interest.
+
+<!-- TODO: something missing here? filter standard CEV? -->
+
+## Documented victims {-}
+
+After applying the necessary filters, we can now calculate statistics about the
+number of documented victims disaggregated by year. These victims were documented
+in the integrated database, but the records are occasionally missing information
+in some fields. We will use the function `summary_observed` to calculate the number
+of documented victims.
+
+The arguments for `summary_observed` are: (1) the violation being analyzed, "desaparicion"; (2) the filtered replicate data; (3) `strata_vars`, the variables
+we would like to stratify our calculations by, in this case `yy_hecho` because we
+want to analyze disappearance by year; and (4) the `conflict_filter` argument which
+filters to keep only people who were victims of violence in the context of the
+armed conflict (variable `is_conflict == TRUE`) or not (`is_conflict == FALSE`).
+
+`summary_observed` also has an argument called (5) `forced_dis_filter` that only
+applies to analyses of enforced disappearance. This argument indicates whether
+the victim was disappeared forcibly (`forced_dis == TRUE`) or not (`forced_dis == FALSE`).
+
+There are a few additional arguments: (6) `edad_minors_filter`, which filters to
+include only victims who were under the age of 18 (`edad_minors_filter = TRUE`);
+(7) `include_props`, which allows for the calculation of proportions for the
+variables of interest (`include_props = TRUE`) and (8) `digits`, which allows
+you to control the amount of rounding for the results (by default the calculations
+are rounded to two decimal places).
+
+```{r combine-observed, echo = TRUE}
+
+documented_table <- verdata::summary_observed("desaparicion",
+                                               replicas_datos, 
+                                               strata_vars = "yy_hecho",
+                                               conflict_filter = TRUE,
+                                               forced_dis_filter = TRUE,
+                                               edad_minors_filter = FALSE,
+                                               include_props = FALSE)
+
+paged_table(documented_table, options = list(rows.print = 4, cols.print = 4))
+
+```
+
+```{r graph-observed, echo = TRUE}
+
+documented_table <- documented_table %>%
+    mutate(yy_hecho = as.numeric(yy_hecho)) %>% 
+    arrange(desc(observed))
+
+g <- documented_table %>%
+    ggplot(aes(x = yy_hecho)) +
+    geom_line(aes(y = observed, color = "Observed"),  size = 1) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 11, angle = 90),
+          axis.title.y = element_text(size = 11),
+          axis.ticks.x = element_line(size = 0.1)) +
+    scale_x_continuous(breaks = seq(1980, 2016, 2)) +
+    theme(legend.position = "bottom") +
+    labs(x = "Year",
+         y = "Number of victims",
+         color = "") +
+    scale_colour_manual(values = c("Observed" = "#434343"))
+
+g
+
+```
+
+After this, we can apply the function `combine_replicates`, which will allow us
+to calculate the point estimate of the mean number of victims of enforced
+disappearance in the integrated database, as well as a measure of the uncertainty
+of the statistical imputation process. This function uses the laws of total
+expectation and variance for these calculations. 
+[*Flexible Imputation of Missing Data*](https://stefvanbuuren.name/fimd/) is a
+useful reference if you would like more informaion about the imputation process.
+
+`combine_replicates` uses the following arguments: (1) the violation being analyzed,
+"desaparicion"; (2) the data frame that results from applying the function
+`summary_observed` to the filtered replicate data (`documented_table`); (3) the
+filtered replicate data; (3) `strata_vars`, the variables
+we would like to stratify our calculations by, in this case `yy_hecho` because we
+want to analyze disappearance by year; and (4) the `conflict_filter` argument which
+filters to keep only people who were victims of violence in the context of the
+armed conflict (variable `is_conflict == TRUE`) or not (`is_conflict == FALSE`).
+
+As was the case with `summary_observed`, `combine_replicates` also has an argument
+called (5) `forced_dis_filter` that only applies to analyses of enforced 
+disappearance. This argument indicates whether the victim was disappeared forcibly
+(`forced_dis == TRUE`) or not (`forced_dis == FALSE`). This argument will always
+be `FALSE` for other violation types.
+
+There are a few additional arguments, again identical to those used in 
+`summary_observed`: (6) `edad_minors_filter`, which filters to
+include only victims who were under the age of 18 (`edad_minors_filter = TRUE`);
+(7) `include_props`, which allows for the calculation of proportions for the
+variables of interest (`include_props = TRUE`) and (8) `digits`, which allows
+you to control the amount of rounding for the results (by default the calculations
+are rounded to two decimal places).
+
+```{r combine-replicates, echo = TRUE}
+
+combined_table <- verdata::combine_replicates("desaparicion",
+                                              tabla_documentada,
+                                              replicas_datos, 
+                                              strata_vars = "yy_hecho",
+                                              conflict_filter = TRUE,
+                                              forced_dis_filter = TRUE,
+                                              edad_minors_filter = FALSE,
+                                              include_props = FALSE)
+
+paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+```{r graph-replicates, echo = TRUE}
+
+combined_table <- combined_table %>% 
+     arrange(desc(imp_mean))
+
+g <- combined_table %>%
+    mutate(yy_hecho = as.numeric(yy_hecho)) %>% 
+    ggplot(aes(x = yy_hecho)) +
+    geom_line(aes(y = observed, color = "Observed"),  size = 1) +
+    geom_line(aes(y = imp_mean,  color = "Imputed"), size = 1) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 11, angle = 90),
+        axis.title.y = element_text(size = 11),
+        axis.ticks.x = element_line(size = 0.1)) +
+    scale_x_continuous(breaks = seq(1980, 2016, 2)) +
+    theme(legend.position = "bottom") +
+    labs(x = "Year",
+         y = "Number of victims",
+         color = "") +
+    scale_colour_manual(values = c("Imputed" = "#1F74B1", 
+                               "Observed" = "#434343"))
+
+g
+
+```
+
+In this figure, the black line represents the trends in the number of documented
+victims over time. Here documented victims refer to victims that we know were 
+disappeared in the context of the armed conflict and who were documented as being
+disappeared forcibly. That is, these victims were not missing information in the
+`is_conflict` or `is_forced_dis` fields. What about records of disappearance 
+victims who are missing information in one or more of these fields? The information
+about these victims, what we will refer to as the imputed number of victims, is
+presented alongside the number of documented victims in the blue line. This shows
+the total number of victims of enforced disappearance we estimate from the victims
+documented in the integrated database alone, but including victims where we were
+missing key information initially, which was probabilistically "filled in" using
+multiple imputation.
+
+For example, after statistically imputing, we estimate that the 95% confidence interval for the true number of victims of enforced disappearance in the integrated database is
+between `r myNum(tabla_combinada$imp_lo[1])` and `r myNum(tabla_combinada$imp_hi[1])`
+for the year 2002. The point estimate of the mean number of victims during this year
+is  `r myNum(tabla_combinada$imp_mean[1])`. While we often use this point estimate
+to examine the tendency of the number of imputed victims over time, it's important
+to remember that this statistic is incomplete without the accompanying 95% confidence
+interval.
+
+Next we will work towards estimating the total number of victims of enforced
+disappearance, including those not documented by any data source.
+
+## Stratification {-}
+
+Stratification serves two goals: one substantive and one technical. First,
+stratification allows us to specify strata—groupings of records—that are consistent
+with our analytical goals. In our case, we want to analyze enforced disappearances
+over time, so we will stratify our estimates by year. Second, it helps us control
+capture heterogeneity, one of the key assumptions underpinning multiple systems
+estimation (see the [technical appendix](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag) for more information).
+
+To begin, we first need to filter the replicates data to include only enforced
+disappearances (`is_forced_dis == 1`) and to include only disappearances that
+occurred in the context of the armed conflict (`is_conflict == 1`).
+
+```{r estratificacion, echo = TRUE}
+
+replicate_strata <- replicates_data %>% 
+  dplyr::mutate(is_conflict = as.integer(is_conflict)) %>% 
+  dplyr::filter(is_conflict == 1) %>% 
+  dplyr::mutate(is_forced_dis = as.integer(is_forced_dis)) %>% 
+  dplyr::filter(is_forced_dis == 1)
+
+paged_table(replicate_strata, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+After filtering the data to include only the records consistent with our
+analysis, we will stratify the data. It's important that as a data user that
+you see that this process is rather artesianal, which is to say that you
+can create your own code or functions to do this process. In this case, we'll
+use a function called `stratify` that is not included in the `verdata` package,
+but that you can copy and use in your own analyses of the data if it serves your
+workflow.
+
+```{r stratification-function, echo = TRUE}
+
+stratify <- function(replicate_data, schema) {
+    
+    schema_list <- unlist(str_split(schema, pattern = ","))
+    
+    grouped_data <- replicate_data %>%
+        group_by(!!!syms(schema_list))
+    
+    stratification_vars <- grouped_data %>%
+        group_keys() %>%
+        group_by_all() %>%
+        group_split()
+    
+    split_data <- grouped_data %>%
+        group_split(.keep = FALSE)
+    
+    return(list(strata_data = split_data,
+                stratification_vars = stratification_vars))
+
+}
+
+```
+
