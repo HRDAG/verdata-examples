@@ -456,9 +456,7 @@ paged_table(estimates, options = list(rows.print = 10, cols.print = 8))
 
 ```
 
-<!-- stopped here -->
-
-```{r transformation-mse, echo = FALSE, eval = FALSE}
+```{r write-mse, echo = FALSE, eval = FALSE}
  
 transformation <- estimates %>% 
     mutate(replicate = stratum_name$replica,
@@ -472,18 +470,108 @@ arrow::write_parquet(transformation,
 
 ```{r open-estimates, echo = TRUE}
 
-estimacion_mse <- arrow::read_parquet(here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-desaparicion.parquet"))
+mse_estimates <- arrow::read_parquet(here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-desaparicion.parquet"))
 
-paged_table(estimacion_mse, options = list(rows.print = 10, cols.print = 8))
+paged_table(mse_estimates, options = list(rows.print = 10, cols.print = 8))
 
 ```
 
-```{r combinacion-transformacion, echo = TRUE}
+```{r show-estimates, echo = TRUE}
 
-tabla_final <- estimacion_mse %>%
+final_table <- estimacion_mse %>%
     rename(replicate = replica) %>% 
     select(-validated, -valid_sources)
 
+paged_table(final_table, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+Now that we have estimates for our strata of interest (`final_table`), we are 
+going to combine using the laws of total expectation and variance as we did 
+for the statistics about the imputed number of victims. To do this, we will first
+group the estimates by `stratum_name`, so that each stratum contains estimates
+from all estimable replicate files (`final_grouping`). Then we will make use of 
+`purrr::map_dfr` to apply the `combine_estimates` function to each of the strata
+we estimated and append the results into a single data frame. After doing this, 
+we use `bind_cols` to add the group keys (which tell us which year the combined
+estimates refer to) to our final data frame. `estimates_table` shows the final
+results of the number of estimated victims of enforced disappearance over time
+and the corresponding approximate 95% credible interval. 
+
+```{r combine-estimates, echo = TRUE}
+
+final_grouping <- final_table %>%
+    group_by(stratum_name)
+
+estimates_table <- final_grouping %>%
+    group_split() %>%
+    map_dfr(.f = combine_estimates) %>%
+    bind_cols(group_keys(final_grouping)) %>% 
+    select(stratum_name, N_025, N_mean, N_975) %>% 
+    rename(yy_hecho = stratum_name)
+
+paged_table(estimates_tabla, options = list(rows.print = 10, cols.print = 5))
+
+```
+
+Now that we have calculated these results we can reproduce the full figure from 
+the technical appendix. To do this we will limit the upper bound of the variance
+we present in the graph so that we can still see the overall patterns.
+
+```{r union, echo = TRUE}
+
+estimates_final <- estimates_tabla %>% 
+    mutate(yy_hecho = as.character(yy_hecho))
+
+tabla_final <- dplyr::left_join(estimates_tabla, tabla_combinada)
+    
 paged_table(tabla_final, options = list(rows.print = 10, cols.print = 5))
 
 ```
+
+```{r cut-variance, echo = TRUE}
+
+n_warn <- 19000
+
+combine_estimates_year <- tabla_final %>%
+    mutate(max_var = case_when((N_975 > n_warn) ~ n_warn,
+                               TRUE ~ NA_real_)) %>%
+    mutate(N_975 = ifelse(!is.na(max_var), max_var, N_975))
+
+```
+
+```{r graph-estimates, echo = TRUE, warning=FALSE}
+
+combine_estimates_year <- combine_estimates_year %>% 
+    arrange(desc(N_mean)) %>% 
+    mutate(yy_hecho = as.numeric(yy_hecho))
+
+mr_observed_ttl <- glue("Observed")
+mr_replicates_ttl <- glue("Imputed")
+mr_universo_ttl <- glue("Estimated")
+
+g <- combine_estimates_year %>%
+  ggplot(aes(x = yy_hecho)) +
+  geom_line(aes(y = observed,
+                fill = mr_observed_ttl), color = "black", size = 1) +
+  geom_line(aes(y = imp_mean,  fill = mr_replicates_ttl),color = "#1F74B1", 
+            show.legend = FALSE, size = 1) +
+  geom_ribbon(aes(ymin = N_025, ymax = N_975, fill = mr_universo_ttl),
+              alpha = 0.5) +
+  geom_point(aes(y = max_var), pch = 21, color = 'darkgreen', fill = "green",
+             size = 1, stroke = 2) +
+  theme_minimal() +
+  xlab("") +
+  ylab("Number of victims") +
+  theme(axis.text.x = element_text(size = 11, angle = 90),
+        axis.title.y = element_text(size = 11),
+        axis.ticks.x = element_line(size = 0.1)) +
+  scale_x_continuous(breaks = seq(1985, 2020, 5)) +
+  theme(legend.position = "bottom") +
+  scale_fill_manual(values = c("darkgreen", "#1F74B1", "black" ), name = "")
+
+print(g)
+
+```
+
+<!-- done. -->
