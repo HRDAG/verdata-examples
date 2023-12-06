@@ -64,15 +64,16 @@ Seeing as each violation type has 100 replicate files, this function authenticat
 the data without needing to read every file into `R`. This is to save computational
 resources or avoid unnecessary computation should you not want to use all 100
 replicates in your analysis. This function returns a data frame with two columns:
-the first column indicates the route to the fiel and the second indicates whether
+the first column indicates the route to the file and the second indicates whether
 the contents of the file are the same as the published version. In instances where
 one or more of the files does not match the published version, the function will
 also return the message _"Some replicate file contents do not match the published versions"_.
 
 ```{r confirm-replicates, eval=FALSE}
 
-confirm <- verdata::confirm_files(here::here("verdata-parquet/desaparicion"),
-                                  "desaparicion", c(1:10))
+confirm <- verdata::confirm_files(here::here("verdata-csv/desaparicion"),
+                                  "desaparicion",
+                                  c(1:10))
 
 ```
 
@@ -84,13 +85,15 @@ return an object (a data frame) if the contents are equal. If the contents of an
 of the files differ, `read_replicates` will return the warning _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_, meaning that any analyses done using these data
 may result in erroneous results. The data will not be read into `R`. If, for 
 whatever reason, you want to read in the data despite differences with the published 
-version, you an set `crash = FALSE`. In this case, the data will be read, but the
+version, you can set `crash = FALSE`. In this case, the data will be read, but the
 warning will still appear.
 
 ```{r open-replicates, echo = TRUE}
 
 replicates_data <- verdata::read_replicates(here::here("verdata-csv/desaparicion"),
-                                            "desaparicion", c(1:10))
+                                            "desaparicion",
+                                            c(1:10),
+                                            crash = TRUE)
 
 paged_table(replicates_data, options = list(rows.print = 10, cols.print = 5))
 
@@ -117,7 +120,7 @@ armed conflict (variable `is_conflict == TRUE`) or not (`is_conflict == FALSE`).
 
 `summary_observed` also has an argument called (5) `forced_dis_filter` that only
 applies to analyses of enforced disappearance. This argument indicates whether
-the victim was disappeared forcibly (`forced_dis == TRUE`) or not (`forced_dis == FALSE`).
+the victim was disappeared forcibly (`is_forced_dis == TRUE`) or not (`is_forced_dis == FALSE`).
 
 There are a few additional arguments: (6) `edad_minors_filter`, which filters to
 include only victims who were under the age of 18 (`edad_minors_filter = TRUE`);
@@ -297,14 +300,14 @@ workflow.
 
 stratify <- function(replicate_data, schema) {
     
-    schema_list <- unlist(str_split(schema, pattern = ","))
+    schema_list <- trimws(unlist(str_split(schema, pattern = ",")))
     
     grouped_data <- replicate_data %>%
         group_by(!!!syms(schema_list))
     
     stratification_vars <- grouped_data %>%
         group_keys() %>%
-        group_by_all() %>%
+        group_by_all() %>% # FIXME: I've been superseded
         group_split()
     
     split_data <- grouped_data %>%
@@ -333,7 +336,7 @@ We can apply the function to our data in the following way:
 
 ```{r stratify-continuation, echo = TRUE}
 
-schema <- ("replica,yy_hecho,is_forced_dis")
+schema <- "replica,yy_hecho,is_forced_dis"
 
 stratification_results <- stratify(replicate_strata, schema)
 
@@ -500,7 +503,7 @@ final_grouping <- final_table %>%
 
 estimates_table <- final_grouping %>%
     group_split() %>%
-    map_dfr(.f = combine_estimates) %>%
+    map_dfr(.f = verdata::combine_estimates) %>%
     bind_cols(group_keys(final_grouping)) %>% 
     select(stratum_name, N_025, N_mean, N_975) %>% 
     rename(yy_hecho = stratum_name)
