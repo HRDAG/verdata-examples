@@ -55,7 +55,7 @@ We'll begin by authenticating and importing the data about disappearances using
 two functions from the `verdata` package: `confirm_files` and `read_replicates`.
 Authenticating the data is relevant because the data was published with a <!-- TODO: add license -->.
 This license allows the data to be distributed and modified by others. You could
-have accessed these data from a number of distinct sourse, so it's important
+have accessed these data from a number of distinct source, so it's important
 to know whether the data have been modified.
 
 The function `confirm_files` authenticates the files that you have downloaded.
@@ -80,15 +80,15 @@ files into `R` in a single data frame (whether using the `.csv` or `.parquet` ve
 and verify that their contents are exactly the same as the publish data. When the
 `crash` argument is set to `TRUE` (the default value), `read_replicates` will onlyy
 return an object (a data frame) if the contents are equal. If the contents of any
-of the files differ, `read_replicates` will return the message _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_, meaning that any analyses done using these data
-may result in erroneous results. <!-- TODO: add more information about behavior" -->
-The data will not be read into `R`. If, for whatever reason, you want to read in
-the data despite differences with the published version, you an set `crash = FALSE`.
-In this case, the data will be read, but the warning will still appear. <!-- TODO: check, is this a message or a warning? -->
+of the files differ, `read_replicates` will return the warning _"The content of the files is not identical to the ones published. This means the results of the analysis may potentially be inconsistent."_, meaning that any analyses done using these data
+may result in erroneous results. The data will not be read into `R`. If, for 
+whatever reason, you want to read in the data despite differences with the published 
+version, you an set `crash = FALSE`. In this case, the data will be read, but the
+warning will still appear.
 
 ```{r open-replicates, echo = TRUE}
 
-replicates_data <- verdata::read_replicates(here::here("verdata-parquet/desaparicion"),
+replicates_data <- verdata::read_replicates(here::here("verdata-csv/desaparicion"),
                                             "desaparicion", c(1:10))
 
 paged_table(replicates_data, options = list(rows.print = 10, cols.print = 5))
@@ -99,11 +99,6 @@ After reading in replicates 1-10, we have `r myNum(nrow(replicates_data))` recor
 Additionally, we observe that the data contains information about the victim's
 age, sex, and ethnicity, the year and department where the violence took place, and
 the presumed perpetrator among other information. 
-
-We will begin our analysis of enforced disappearances by transforming and filtering
-this data to be suited to our question of interest.
-
-<!-- TODO: something missing here? filter standard CEV? -->
 
 ## Documented victims {-}
 
@@ -133,7 +128,7 @@ are rounded to two decimal places).
 ```{r combine-observed, echo = TRUE}
 
 documented_table <- verdata::summary_observed("desaparicion",
-                                               replicas_datos, 
+                                               replicates_data, 
                                                strata_vars = "yy_hecho",
                                                conflict_filter = TRUE,
                                                forced_dis_filter = TRUE,
@@ -202,15 +197,15 @@ are rounded to two decimal places).
 ```{r combine-replicates, echo = TRUE}
 
 combined_table <- verdata::combine_replicates("desaparicion",
-                                              tabla_documentada,
-                                              replicas_datos, 
+                                              documented_table,
+                                              replicates_data, 
                                               strata_vars = "yy_hecho",
                                               conflict_filter = TRUE,
                                               forced_dis_filter = TRUE,
                                               edad_minors_filter = FALSE,
                                               include_props = FALSE)
 
-paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
+paged_table(combined_table, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
@@ -254,9 +249,9 @@ missing key information initially, which was probabilistically "filled in" using
 multiple imputation.
 
 For example, after statistically imputing, we estimate that the 95% confidence interval for the true number of victims of enforced disappearance in the integrated database is
-between `r myNum(tabla_combinada$imp_lo[1])` and `r myNum(tabla_combinada$imp_hi[1])`
+between `r myNum(combined_table$imp_lo[1])` and `r myNum(combined_table$imp_hi[1])`
 for the year 2002. The point estimate of the mean number of victims during this year
-is  `r myNum(tabla_combinada$imp_mean[1])`. While we often use this point estimate
+is  `r myNum(combined_table$imp_mean[1])`. While we often use this point estimate
 to examine the tendency of the number of imputed victims over time, it's important
 to remember that this statistic is incomplete without the accompanying 95% confidence
 interval.
@@ -478,7 +473,7 @@ paged_table(mse_estimates, options = list(rows.print = 10, cols.print = 8))
 
 ```{r show-estimates, echo = TRUE}
 
-final_table <- estimacion_mse %>%
+final_table <- mse_estimates %>%
     rename(replicate = replica) %>% 
     select(-validated, -valid_sources)
 
@@ -510,7 +505,7 @@ estimates_table <- final_grouping %>%
     select(stratum_name, N_025, N_mean, N_975) %>% 
     rename(yy_hecho = stratum_name)
 
-paged_table(estimates_tabla, options = list(rows.print = 10, cols.print = 5))
+paged_table(estimates_table, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
@@ -520,12 +515,12 @@ we present in the graph so that we can still see the overall patterns.
 
 ```{r union, echo = TRUE}
 
-estimates_final <- estimates_tabla %>% 
+estimates_final <- estimates_table %>% 
     mutate(yy_hecho = as.character(yy_hecho))
 
-tabla_final <- dplyr::left_join(estimates_tabla, tabla_combinada)
+final_table <- dplyr::left_join(estimates_table, combined_table)
     
-paged_table(tabla_final, options = list(rows.print = 10, cols.print = 5))
+paged_table(final_table, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
@@ -533,7 +528,7 @@ paged_table(tabla_final, options = list(rows.print = 10, cols.print = 5))
 
 n_warn <- 19000
 
-combine_estimates_year <- tabla_final %>%
+combine_estimates_year <- final_table %>%
     mutate(max_var = case_when((N_975 > n_warn) ~ n_warn,
                                TRUE ~ NA_real_)) %>%
     mutate(N_975 = ifelse(!is.na(max_var), max_var, N_975))
