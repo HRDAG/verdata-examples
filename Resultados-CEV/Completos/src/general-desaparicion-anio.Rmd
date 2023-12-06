@@ -47,7 +47,7 @@ estos ejemplos y el paquete `verdata`, consulte:
 https://github.com/HRDAG/CO-examples/blob/main/Introducción/output/Introducción.html 
 antes de continuar. 
 
-En este ejemplo, se ilustrará el proceso para obtener los datos observados imputados 
+En este ejemplo, se ilustrará el proceso para obtener los datos observados, imputados 
 y la estimación por año del subregistro de víctimas de desaparición forzada. 
 Específicamente, se replicará la figura (sup-izq) de la página 12 del [anexo metodológico del proyecto](https://www.comisiondelaverdad.co/anexo-proyecto-jep-cevhrdag).
 
