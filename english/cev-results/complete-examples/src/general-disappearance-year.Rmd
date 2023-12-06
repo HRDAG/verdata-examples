@@ -53,10 +53,11 @@ replicates the upper left-hand panel of the figure found on page 12 of the [tech
 
 We'll begin by authenticating and importing the data about disappearances using
 two functions from the `verdata` package: `confirm_files` and `read_replicates`.
-Authenticating the data is relevant because the data was published with a <!-- TODO: add license -->.
-This license allows the data to be distributed and modified by others. You could
-have accessed these data from a number of distinct source, so it's important
-to know whether the data have been modified.
+Authenticating the data is relevant because the data was published with a 
+Creative Commons (CC BY 4.0) license. This license allows the data to be 
+distributed and modified by others. You could have accessed these data from a
+number of distinct source, so it's important to know whether the data have been 
+modified.
 
 The function `confirm_files` authenticates the files that you have downloaded.
 Seeing as each violation type has 100 replicate files, this function authenticates
@@ -95,6 +96,7 @@ paged_table(replicates_data, options = list(rows.print = 10, cols.print = 5))
 
 ```
 
+
 After reading in replicates 1-10, we have `r myNum(nrow(replicates_data))` records.
 Additionally, we observe that the data contains information about the victim's
 age, sex, and ethnicity, the year and department where the violence took place, and
@@ -102,11 +104,10 @@ the presumed perpetrator among other information.
 
 ## Documented victims {-}
 
-After applying the necessary filters, we can now calculate statistics about the
-number of documented victims disaggregated by year. These victims were documented
-in the integrated database, but the records are occasionally missing information
-in some fields. We will use the function `summary_observed` to calculate the number
-of documented victims.
+We can now calculate statistics about the number of documented victims 
+disaggregated by year. These victims were documented in the integrated database,
+but the records are occasionally missing information in some fields. We will use
+the function `summary_observed` to calculate the number of documented victims.
 
 The arguments for `summary_observed` are: (1) the violation being analyzed, "desaparicion"; (2) the filtered replicate data; (3) `strata_vars`, the variables
 we would like to stratify our calculations by, in this case `yy_hecho` because we
@@ -275,10 +276,10 @@ occurred in the context of the armed conflict (`is_conflict == 1`).
 ```{r estratificacion, echo = TRUE}
 
 replicate_strata <- replicates_data %>% 
-  dplyr::mutate(is_conflict = as.integer(is_conflict)) %>% 
-  dplyr::filter(is_conflict == 1) %>% 
-  dplyr::mutate(is_forced_dis = as.integer(is_forced_dis)) %>% 
-  dplyr::filter(is_forced_dis == 1)
+  mutate(is_conflict = as.integer(is_conflict)) %>% 
+  filter(is_conflict == 1) %>% 
+  mutate(is_forced_dis = as.integer(is_forced_dis)) %>% 
+  filter(is_forced_dis == 1)
 
 paged_table(replicate_strata, options = list(rows.print = 10, cols.print = 5))
 
@@ -443,9 +444,9 @@ the sample from the posterior distribution will be `NA`.
 ```{r estimates, eval=FALSE}
 
 estimates <- purrr::map2_dfr(.x = stratification_results$strata_data,
-                              .y = stratification_results$stratification_vars,
-                              .f = verdata::mse,
-                              estimates_dir = estimates_dir)
+                             .y = stratification_results$stratification_vars,
+                             .f = verdata::mse,
+                             estimates_dir = estimates_dir)
 
 paged_table(estimates, options = list(rows.print = 10, cols.print = 8))
 
@@ -457,7 +458,6 @@ transformation <- estimates %>%
     mutate(replicate = stratum_name$replica,
            stratum_name = paste(stratum_name$yy_hecho,sep = "-"))
 
-# TODO: FIXME
 arrow::write_parquet(transformation,
                      here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-desaparicion.parquet"))
  
@@ -518,7 +518,7 @@ we present in the graph so that we can still see the overall patterns.
 estimates_final <- estimates_table %>% 
     mutate(yy_hecho = as.character(yy_hecho))
 
-final_table <- dplyr::left_join(estimates_table, combined_table)
+final_table <- left_join(estimates_table, combined_table)
     
 paged_table(final_table, options = list(rows.print = 10, cols.print = 5))
 
