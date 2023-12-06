@@ -43,7 +43,7 @@ library(verdata)
 
 If it's your first time working with the data, you are not familiar with the package
 or you simply want to know more about the project and the objectives of these examples
-and the `verdata` package, please review <!-- TODO: add link ---> before continuing.
+and the `verdata` package, please review the [Introduction document](https://github.com/HRDAG/verdata-examples/tree/main/english/introduction) before continuing.
 
 This example illustrates the process of calculating statistics about documented,
 imputed, and total victims of enforced disappearance by year. Specifically, it
