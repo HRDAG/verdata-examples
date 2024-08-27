@@ -2,7 +2,7 @@
 
 Este repositorio tiene como objetivo ilustrar el uso del [paquete `verdata`](https://github.com/HRDAG/verdata) para hacer análisis con los [datos](https://microdatos.dane.gov.co/index.php/catalog/795) resultantes del proyecto conjunto entre la Jurisdicción Especial para la Paz, la Comsión de la Verdad y el Human Rights Data Analysis Group sobre el conflicto armado en Colombia.
 
-En este repositorio encontrará ejemplos para [replicar las cifras del Informe Final de la Comisión](https://github.com/HRDAG/CO-examples/tree/main/Resultados-CEV) y ejemplos de análisis nuevos.
+En este repositorio encontrará ejemplos para [replicar las cifras del Informe Final de la Comisión](https://github.com/HRDAG/CO-examples/tree/main/Resultados-CEV) y ejemplos de análisis nuevos. Antes de empezar debe descargar los datos (en formato csv o pqrquet) en su máquina local desde: <https://microdatos.dane.gov.co/index.php/catalog/795>. 
 
 Si es su primera vez usando los datos y el paquete, recomendamos leer en primer lugar el material en la carpeta de [Introducción](https://github.com/HRDAG/CO-examples/tree/main/Introducción) para familiarizarse con el proyecto. Por otro lado, la carpeta de [Recursos](https://github.com/HRDAG/CO-examples/tree/main/Recursos) contiene información útil sobre diferentes desagregaciones que se usaron en los análisis de la Comisión de la Verdad y que facilitará su uso de los datos. Además, recomendamos explorar la carpeta de [Resultados-CEV](https://github.com/HRDAG/CO-examples/tree/main/Resultados-CEV) este orden:
 
