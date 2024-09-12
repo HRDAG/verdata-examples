@@ -74,8 +74,10 @@ la función devuelve el mensaje _"Some replicate file contents do not match the 
 
 ```{r confirm-replicates, eval=FALSE}
 
-confirmar <- verdata::confirm_files(here::here("verdata-parquet/secuestro"),
-                                    "secuestro", c(20:45))
+confirmar <- verdata::confirm_files(replicates_dir = here::here("verdata-parquet/secuestro"),
+                                    violation = "secuestro", 
+                                    replicate_nums = c(20:45),
+                                    version = "v1")
 
 ```
 
@@ -92,7 +94,7 @@ razón usted quiere leer dicha información a pesar de saber que no son los mism
 datos originalmente publicados, puede cambiar el argumento `crash` a FALSE, y, 
 en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia. 
 
-Así, en este ejemplo trabajaremos las réplicas 1 a la 10. Usted puede trabajar con 
+Así, en este ejemplo trabajaremos las réplicas 20 a la 45. Usted puede trabajar con 
 las réplicas que desee de acuerdo con los análisis que desee realizar, ya que, 
 como se ha mencionado, esta información documentada se refiere a las 
 víctimas que fueron registradas originalmente en las bases (y en el que algunos 
@@ -104,8 +106,10 @@ en la Comisión de la Verdad.
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/secuestro"),
-                                           "secuestro", c(20:45))
+replicas_datos <- verdata::read_replicates(replicates_dir = here::here("verdata-parquet/secuestro"),
+                                    violation = "secuestro", 
+                                    replicate_nums = c(20:45),
+                                    version = "v1")
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 
