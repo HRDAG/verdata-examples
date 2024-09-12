@@ -26,7 +26,7 @@ options(warn = -1)
 ```{r numbers, include = FALSE}
 
 myNum <- function(n) {
-  return(prettyNum(n, big.mark = " "))
+    return(prettyNum(n, big.mark = " "))
 }
 
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -71,9 +71,10 @@ also return the message _"Some replicate file contents do not match the publishe
 
 ```{r confirm-replicates, eval=FALSE}
 
-confirm <- verdata::confirm_files(here::here("verdata-csv/desaparicion"),
-                                  "desaparicion",
-                                  c(1:10))
+confirm <- verdata::confirm_files(replicates_dir = here::here("verdata-csv/desaparicion"),
+                                  violation = "desaparicion",
+                                  replicate_nums = c(1:10),
+                                  version = "v1")
 
 ```
 
@@ -90,9 +91,10 @@ warning will still appear.
 
 ```{r open-replicates, echo = TRUE}
 
-replicates_data <- verdata::read_replicates(here::here("verdata-csv/desaparicion"),
-                                            "desaparicion",
-                                            c(1:10),
+replicates_data <- verdata::read_replicates(replicates_dir = here::here("verdata-csv/desaparicion"),
+                                            violation = "desaparicion",
+                                            replicate_nums = c(1:10),
+                                            version = "v1",
                                             crash = TRUE)
 
 paged_table(replicates_data, options = list(rows.print = 10, cols.print = 5))
@@ -132,12 +134,12 @@ are rounded to two decimal places).
 ```{r combine-observed, echo = TRUE}
 
 documented_table <- verdata::summary_observed("desaparicion",
-                                               replicates_data, 
-                                               strata_vars = "yy_hecho",
-                                               conflict_filter = TRUE,
-                                               forced_dis_filter = TRUE,
-                                               edad_minors_filter = FALSE,
-                                               include_props = FALSE)
+                                              replicates_data, 
+                                              strata_vars = "yy_hecho",
+                                              conflict_filter = TRUE,
+                                              forced_dis_filter = TRUE,
+                                              edad_minors_filter = FALSE,
+                                              include_props = FALSE)
 
 paged_table(documented_table, options = list(rows.print = 4, cols.print = 4))
 
@@ -216,7 +218,7 @@ paged_table(combined_table, options = list(rows.print = 10, cols.print = 5))
 ```{r graph-replicates, echo = TRUE}
 
 combined_table <- combined_table %>% 
-     arrange(desc(imp_mean))
+    arrange(desc(imp_mean))
 
 g <- combined_table %>%
     mutate(yy_hecho = as.numeric(yy_hecho)) %>% 
@@ -225,15 +227,15 @@ g <- combined_table %>%
     geom_line(aes(y = imp_mean,  color = "Imputed"), size = 1) +
     theme_minimal() +
     theme(axis.text.x = element_text(size = 11, angle = 90),
-        axis.title.y = element_text(size = 11),
-        axis.ticks.x = element_line(size = 0.1)) +
+          axis.title.y = element_text(size = 11),
+          axis.ticks.x = element_line(size = 0.1)) +
     scale_x_continuous(breaks = seq(1980, 2016, 2)) +
     theme(legend.position = "bottom") +
     labs(x = "Year",
          y = "Number of victims",
          color = "") +
     scale_colour_manual(values = c("Imputed" = "#1F74B1", 
-                               "Observed" = "#434343"))
+                                   "Observed" = "#434343"))
 
 g
 
@@ -279,10 +281,10 @@ occurred in the context of the armed conflict (`is_conflict == 1`).
 ```{r estratificacion, echo = TRUE}
 
 replicate_strata <- replicates_data %>% 
-  mutate(is_conflict = as.integer(is_conflict)) %>% 
-  filter(is_conflict == 1) %>% 
-  mutate(is_forced_dis = as.integer(is_forced_dis)) %>% 
-  filter(is_forced_dis == 1)
+    mutate(is_conflict = as.integer(is_conflict)) %>% 
+    filter(is_conflict == 1) %>% 
+    mutate(is_forced_dis = as.integer(is_forced_dis)) %>% 
+    filter(is_forced_dis == 1)
 
 paged_table(replicate_strata, options = list(rows.print = 10, cols.print = 5))
 
@@ -315,7 +317,7 @@ stratify <- function(replicate_data, schema) {
     
     return(list(strata_data = split_data,
                 stratification_vars = stratification_vars))
-
+    
 }
 
 ```
@@ -399,17 +401,17 @@ Let's now take a closer look at the arguments of the `mse` function.
 ```{r mse-function, eval = FALSE}
 
 mse(
-  stratum_data,
-  stratum_name,
-  estimates_dir = NULL,
-  min_n = 1,
-  K = NULL,
-  buffer_size = 10000,
-  sampler_thinning = 1000,
-  seed = 19481210,
-  burnin = 10000,
-  n_samples = 10000,
-  posterior_thinning = 500
+    stratum_data,
+    stratum_name,
+    estimates_dir = NULL,
+    min_n = 1,
+    K = NULL,
+    buffer_size = 10000,
+    sampler_thinning = 1000,
+    seed = 19481210,
+    burnin = 10000,
+    n_samples = 10000,
+    posterior_thinning = 500
 )
 
 ```
@@ -456,14 +458,14 @@ paged_table(estimates, options = list(rows.print = 10, cols.print = 8))
 ```
 
 ```{r write-mse, echo = FALSE, eval = FALSE}
- 
+
 transformation <- estimates %>% 
     mutate(replicate = stratum_name$replica,
            stratum_name = paste(stratum_name$yy_hecho,sep = "-"))
 
 arrow::write_parquet(transformation,
                      here::here("Resultados-CEV/Estimacion/output-estimacion/yy_hecho-desaparicion.parquet"))
- 
+
 ``` 
 
 ```{r open-estimates, echo = TRUE}
@@ -522,7 +524,7 @@ estimates_final <- estimates_table %>%
     mutate(yy_hecho = as.character(yy_hecho))
 
 final_table <- left_join(estimates_table, combined_table)
-    
+
 paged_table(final_table, options = list(rows.print = 10, cols.print = 5))
 
 ```
@@ -549,24 +551,24 @@ mr_replicates_ttl <- glue("Imputed")
 mr_universo_ttl <- glue("Estimated")
 
 g <- combine_estimates_year %>%
-  ggplot(aes(x = yy_hecho)) +
-  geom_line(aes(y = observed,
-                fill = mr_observed_ttl), color = "black", size = 1) +
-  geom_line(aes(y = imp_mean,  fill = mr_replicates_ttl),color = "#1F74B1", 
-            show.legend = FALSE, size = 1) +
-  geom_ribbon(aes(ymin = N_025, ymax = N_975, fill = mr_universo_ttl),
-              alpha = 0.5) +
-  geom_point(aes(y = max_var), pch = 21, color = 'darkgreen', fill = "green",
-             size = 1, stroke = 2) +
-  theme_minimal() +
-  xlab("") +
-  ylab("Number of victims") +
-  theme(axis.text.x = element_text(size = 11, angle = 90),
-        axis.title.y = element_text(size = 11),
-        axis.ticks.x = element_line(size = 0.1)) +
-  scale_x_continuous(breaks = seq(1985, 2020, 5)) +
-  theme(legend.position = "bottom") +
-  scale_fill_manual(values = c("darkgreen", "#1F74B1", "black" ), name = "")
+    ggplot(aes(x = yy_hecho)) +
+    geom_line(aes(y = observed,
+                  fill = mr_observed_ttl), color = "black", size = 1) +
+    geom_line(aes(y = imp_mean,  fill = mr_replicates_ttl),color = "#1F74B1", 
+              show.legend = FALSE, size = 1) +
+    geom_ribbon(aes(ymin = N_025, ymax = N_975, fill = mr_universo_ttl),
+                alpha = 0.5) +
+    geom_point(aes(y = max_var), pch = 21, color = 'darkgreen', fill = "green",
+               size = 1, stroke = 2) +
+    theme_minimal() +
+    xlab("") +
+    ylab("Number of victims") +
+    theme(axis.text.x = element_text(size = 11, angle = 90),
+          axis.title.y = element_text(size = 11),
+          axis.ticks.x = element_line(size = 0.1)) +
+    scale_x_continuous(breaks = seq(1985, 2020, 5)) +
+    theme(legend.position = "bottom") +
+    scale_fill_manual(values = c("darkgreen", "#1F74B1", "black" ), name = "")
 
 print(g)
 
