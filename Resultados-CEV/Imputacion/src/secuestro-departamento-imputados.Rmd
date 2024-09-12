@@ -26,7 +26,7 @@ options(warn = -1)
 ```{r numbers, include = FALSE}
 
 myNum <- function(n) {
-  return(prettyNum(n, big.mark = " "))
+    return(prettyNum(n, big.mark = " "))
 }
 
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -73,8 +73,10 @@ la función devuelve el mensaje _"Some replicate file contents do not match the 
 
 ```{r confirm-replicates, eval=FALSE}
 
-confirmar <- verdata::confirm_files(here::here("verdata-parquet/secuestro"),
-                                    "secuestro", c(1:10))
+confirmar <- verdata::confirm_files(replicates_dir = here::here("verdata-parquet/secuestro"),
+                                    violation = "secuestro",
+                                    replicate_nums = c(1:10),
+                                    version = "v1")
 
 ```
 
@@ -93,8 +95,10 @@ en ese caso, podrá ver dicha información junto con el mismo mensaje de adverte
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/secuestro"),
-                                           "secuestro", c(1:10))
+replicas_datos <- verdata::read_replicates(replicates_dir = here::here("verdata-parquet/secuestro"),
+                                           violation = "secuestro",
+                                           replicate_nums = c(1:10),
+                                           version = "v1")
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 
@@ -128,7 +132,7 @@ paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
 ```{r filter-cev-continuacion, echo = FALSE}
 
 replicas_filtradas <- replicas_filtradas %>%
-            dplyr::filter(p_str != "OTRO")
+    dplyr::filter(p_str != "OTRO")
 ```
 
 ## Víctimas documentadas {-}
@@ -176,13 +180,13 @@ defecto es = 2.
 ```{r combine-replicates, echo = TRUE}
 
 tabla_combinada <- verdata::combine_replicates("secuestro",
-                                                tabla_documentada,
-                                                replicas_filtradas, 
-                                                strata_vars = "dept_code_hecho",
-                                                conflict_filter = TRUE,
-                                                forced_dis_filter = FALSE,
-                                                edad_minors_filter = FALSE,
-                                                include_props = FALSE)
+                                               tabla_documentada,
+                                               replicas_filtradas, 
+                                               strata_vars = "dept_code_hecho",
+                                               conflict_filter = TRUE,
+                                               forced_dis_filter = FALSE,
+                                               edad_minors_filter = FALSE,
+                                               include_props = FALSE)
 
 
 paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
@@ -199,24 +203,24 @@ diez_primeros_departamentos <- tabla_combinada %>%
 # Gráfica por departamento - 10 primeros
 
 grafica <- ggplot(diez_primeros_departamentos,
-                aes(x = reorder(dept_name , -observed), y = 0)) +
-  geom_crossbar(aes(ymin = imp_lo, ymax = imp_hi, fill = "Rango de imputación"),
-                color = "#1F74B1") +
-  geom_col(aes(y = observed, fill = "Observado"), color = "#2F2F2F") +
-  geom_point(aes(y = imp_mean), pch = 21, color = '#63aee3', fill = "#1F74B1",
-             size = 1, stroke = 1.1) +
-  scale_y_continuous(labels = function(n){format(n, scientific = FALSE)}) +
-  theme_minimal() +
-  theme(legend.title = element_text(size = 6, face = "bold"),
-        legend.text = element_text(size = 9, face = "bold"),
-        legend.position = c(0.7, 0.7)) +
-  theme(axis.text.x = element_text(angle = 50, hjust = 1, face = "bold")) +
-  theme(legend.position = "top") +
-  labs(x = "Primeros 10 departamentos",
-       y = "Número de víctimas",
-       fill = "") +
-  scale_fill_manual(values = c("Observado" = "#2F2F2F",
-                               "Rango de imputación" = "#1F74B1"))
+                  aes(x = reorder(dept_name , -observed), y = 0)) +
+    geom_crossbar(aes(ymin = imp_lo, ymax = imp_hi, fill = "Rango de imputación"),
+                  color = "#1F74B1") +
+    geom_col(aes(y = observed, fill = "Observado"), color = "#2F2F2F") +
+    geom_point(aes(y = imp_mean), pch = 21, color = '#63aee3', fill = "#1F74B1",
+               size = 1, stroke = 1.1) +
+    scale_y_continuous(labels = function(n){format(n, scientific = FALSE)}) +
+    theme_minimal() +
+    theme(legend.title = element_text(size = 6, face = "bold"),
+          legend.text = element_text(size = 9, face = "bold"),
+          legend.position = c(0.7, 0.7)) +
+    theme(axis.text.x = element_text(angle = 50, hjust = 1, face = "bold")) +
+    theme(legend.position = "top") +
+    labs(x = "Primeros 10 departamentos",
+         y = "Número de víctimas",
+         fill = "") +
+    scale_fill_manual(values = c("Observado" = "#2F2F2F",
+                                 "Rango de imputación" = "#1F74B1"))
 
 
 grafica

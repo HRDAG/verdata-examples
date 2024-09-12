@@ -26,7 +26,7 @@ options(warn = -1)
 ```{r numbers, include = FALSE}
 
 myNum <- function(n) {
-  return(prettyNum(n, big.mark = " "))
+    return(prettyNum(n, big.mark = " "))
 }
 
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -72,8 +72,10 @@ la función devuelve el mensaje _"Some replicate file contents do not match the 
 
 ```{r confirm-replicates, eval=FALSE}
 
-confirmar <- verdata::confirm_files(here::here("verdata-parquet/homicidio"),
-                                    "homicidio", c(1:10))
+confirmar <- verdata::confirm_files(replicates_dir = here::here("verdata-parquet/homicidio"),
+                                    violation = "homicidio", 
+                                    replicate_nums = c(1:10),
+                                    version = "v1")
 
 ```
 
@@ -92,8 +94,10 @@ en ese caso, podrá ver dicha información junto con el mismo mensaje de adverte
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/homicidio"),
-                                           "homicidio", c(1:10))
+replicas_datos <- verdata::read_replicates(replicates_dir = here::here("verdata-parquet/homicidio"),
+                                           violation = "homicidio", 
+                                           replicate_nums = c(1:10),
+                                           version = "v1")
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 
@@ -170,13 +174,13 @@ defecto es = 2.
 ```{r combine-replicates, echo = TRUE}
 
 tabla_combinada <- verdata::combine_replicates("homicidio",
-                                                tabla_documentada,
-                                                replicas_filtradas, 
-                                                strata_vars = "yy_hecho",
-                                                conflict_filter = TRUE,
-                                                forced_dis_filter = FALSE,
-                                                edad_minors_filter = FALSE,
-                                                include_props = FALSE)
+                                               tabla_documentada,
+                                               replicas_filtradas, 
+                                               strata_vars = "yy_hecho",
+                                               conflict_filter = TRUE,
+                                               forced_dis_filter = FALSE,
+                                               edad_minors_filter = FALSE,
+                                               include_props = FALSE)
 
 paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
 
@@ -184,7 +188,7 @@ paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
 ```{r graph-replicates, echo = TRUE}
 
 tabla_combinada <- tabla_combinada %>% 
-     arrange(desc(imp_mean))
+    arrange(desc(imp_mean))
 
 g <- tabla_combinada %>%
     mutate(yy_hecho = as.numeric(yy_hecho)) %>% 
@@ -193,15 +197,15 @@ g <- tabla_combinada %>%
     geom_line(aes(y = imp_mean,  color = "Imputado"), size = 1) +
     theme_minimal() +
     theme(axis.text.x = element_text(size = 11, angle = 90),
-        axis.title.y = element_text(size = 11),
-        axis.ticks.x = element_line(size = 0.1)) +
+          axis.title.y = element_text(size = 11),
+          axis.ticks.x = element_line(size = 0.1)) +
     scale_x_continuous(breaks = seq(1980, 2016, 2)) +
     theme(legend.position = "bottom") +
     labs(x = "Año",
          y = "Número de víctimas",
          color = "") +
     scale_colour_manual(values = c("Imputado" = "#1F74B1", 
-                               "Observado" = "#434343"))
+                                   "Observado" = "#434343"))
 
 g
 

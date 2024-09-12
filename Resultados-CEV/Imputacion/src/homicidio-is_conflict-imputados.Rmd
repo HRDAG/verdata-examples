@@ -26,7 +26,7 @@ options(warn = -1)
 ```{r numbers, include = FALSE}
 
 myNum <- function(n) {
-  return(prettyNum(n, big.mark = " "))
+    return(prettyNum(n, big.mark = " "))
 }
 
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -73,8 +73,10 @@ la función devuelve el mensaje _"Some replicate file contents do not match the 
 
 ```{r confirm-replicates, eval=FALSE}
 
-confirmar <- verdata::confirm_files(here::here("verdata-parquet/homicidio"),
-                                    "homicidio", c(1:10))
+confirmar <- verdata::confirm_files(replicates_dir = here::here("verdata-parquet/homicidio"),
+                                    violation = "homicidio", 
+                                    replicate_nums = c(1:10),
+                                    version = "v1")
 
 ```
 
@@ -93,8 +95,10 @@ en ese caso, podrá ver dicha información junto con el mismo mensaje de adverte
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/homicidio"),
-                                           "homicidio", c(1:10))
+replicas_datos <- verdata::read_replicates(replicates_dir = here::here("verdata-parquet/homicidio"),
+                                           violation = "homicidio", 
+                                           replicate_nums = c(1:10),
+                                           version = "v1")
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 
@@ -137,8 +141,8 @@ esta misma variable (con la función `summary_observed`). Esta información
 tabla_documentada <- arrow::read_parquet(here::here("Resultados-CEV/Documentados/output-documentados/homicidio-is_conflict-documentado.parquet"))
 
 tabla_documentada <- tabla_documentada %>% 
-  mutate(is_conflict = as.logical(is_conflict)) %>% 
-  mutate(is_conflict = as.integer(is_conflict))
+    mutate(is_conflict = as.logical(is_conflict)) %>% 
+    mutate(is_conflict = as.integer(is_conflict))
 
 paged_table(tabla_documentada, options = list(rows.print = 10, cols.print = 5))
 

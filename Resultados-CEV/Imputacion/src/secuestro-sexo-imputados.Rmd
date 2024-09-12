@@ -26,7 +26,7 @@ options(warn = -1)
 ```{r numbers, include = FALSE}
 
 myNum <- function(n) {
-  return(prettyNum(n, big.mark = " "))
+    return(prettyNum(n, big.mark = " "))
 }
 
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -175,17 +175,17 @@ defecto es = 2.
 ```{r combine-replicates, echo = TRUE}
 
 tabla_combinada <- verdata::combine_replicates("secuestro",
-                                                tabla_documentada,
-                                                replicas_filtradas, 
-                                                strata_vars = "sexo",
-                                                conflict_filter = TRUE,
-                                                forced_dis_filter = FALSE,
-                                                edad_minors_filter = FALSE,
-                                                include_props = TRUE)
+                                               tabla_documentada,
+                                               replicas_filtradas, 
+                                               strata_vars = "sexo",
+                                               conflict_filter = TRUE,
+                                               forced_dis_filter = FALSE,
+                                               edad_minors_filter = FALSE,
+                                               include_props = TRUE)
 
 tabla_combinada <- tabla_combinada %>% 
-  select(sexo, observed, obs_prop_na, obs_prop, imp_lo, imp_mean, imp_hi,
-         imp_lo_p, imp_mean_p, imp_hi_p )
+    select(sexo, observed, obs_prop_na, obs_prop, imp_lo, imp_mean, imp_hi,
+           imp_lo_p, imp_mean_p, imp_hi_p )
 
 paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
 
