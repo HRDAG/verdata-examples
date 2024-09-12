@@ -25,7 +25,7 @@ options(warn = -1)
 ```{r numbers, include = FALSE}
 
 myNum <- function(n) {
-  return(prettyNum(n, big.mark = " "))
+    return(prettyNum(n, big.mark = " "))
 }
 
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -71,8 +71,10 @@ la función devuelve el mensaje _"Some replicate file contents do not match the 
 
 ```{r confirm-replicates, eval=FALSE}
 
-confirmar <- verdata::confirm_files(here::here("verdata-parquet/secuestro"),
-                                    "secuestro", c(1:10))
+confirmar <- verdata::confirm_files(replicates_dir = here::here("verdata-parquet/secuestro"),
+                                    violation = "secuestro", 
+                                    replicate_nums = c(1:10),
+                                    version = "v1")
 
 ```
 
@@ -95,10 +97,12 @@ conflicto armado, filtraremos por aquellas personas víctimas dentro de este mar
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/secuestro"),
-                                           "secuestro", c(1:10)) %>% 
-  dplyr::mutate(is_conflict = as.integer(is_conflict)) %>%
-  dplyr::filter(is_conflict == 1)
+replicas_datos <- verdata::read_replicates(replicates_dir = here::here("verdata-parquet/secuestro"),
+                                           violation = "secuestro", 
+                                           replicate_nums = c(1:10),
+                                           version = "v1") %>% 
+    dplyr::mutate(is_conflict = as.integer(is_conflict)) %>%
+    dplyr::filter(is_conflict == 1)
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 
@@ -140,7 +144,7 @@ stratify <- function(replicate_data, schema) {
     
     return(list(strata_data = split_data,
                 stratification_vars = stratification_vars))
-
+    
 }
 
 ```
