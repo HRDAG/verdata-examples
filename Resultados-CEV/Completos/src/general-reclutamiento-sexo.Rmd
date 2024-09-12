@@ -26,7 +26,7 @@ options(warn = -1)
 ```{r numbers, include = FALSE}
 
 myNum <- function(n) {
-  return(prettyNum(n, big.mark = " "))
+    return(prettyNum(n, big.mark = " "))
 }
 
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -73,8 +73,10 @@ la función devuelve el mensaje _"Some replicate file contents do not match the 
 
 ```{r confirm-replicates, eval=FALSE}
 
-confirmar <- verdata::confirm_files(here::here("verdata-parquet/reclutamiento"),
-                                    "reclutamiento", c(1:10))
+confirmar <- verdata::confirm_files(replicates_dir = here::here("verdata-parquet/reclutamiento"),
+                                    violation = "reclutamiento",
+                                    replicate_nums = c(1:10),
+                                    violation = "v1")
 
 ```
 
@@ -93,8 +95,10 @@ en ese caso, podrá ver los datos, junto con el mismo mensaje de advertencia.
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/reclutamiento"),
-                                           "reclutamiento", c(1:10))
+replicas_datos <- verdata::read_replicates(replicates_dir = here::here("verdata-parquet/reclutamiento"),
+                                           violation = "reclutamiento",
+                                           replicate_nums = c(1:10),
+                                           violation = "v1")
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 
@@ -200,17 +204,17 @@ resultados (que por defecto es 2).
 ```{r combine-replicates, echo = TRUE}
 
 tabla_combinada <- verdata::combine_replicates("reclutamiento",
-                                                tabla_documentada,
-                                                replicas_filtradas, 
-                                                strata_vars = "sexo",
-                                                conflict_filter = TRUE,
-                                                forced_dis_filter = FALSE,
-                                                edad_minors_filter = TRUE,
-                                                include_props = TRUE)
+                                               tabla_documentada,
+                                               replicas_filtradas, 
+                                               strata_vars = "sexo",
+                                               conflict_filter = TRUE,
+                                               forced_dis_filter = FALSE,
+                                               edad_minors_filter = TRUE,
+                                               include_props = TRUE)
 
 tabla_combinada <- tabla_combinada %>% 
-  select(sexo, observed, obs_prop_na, obs_prop, imp_lo, imp_mean, imp_hi,
-         imp_lo_p, imp_mean_p, imp_hi_p )
+    select(sexo, observed, obs_prop_na, obs_prop, imp_lo, imp_mean, imp_hi,
+           imp_lo_p, imp_mean_p, imp_hi_p )
 
 paged_table(tabla_combinada, options = list(rows.print = 10, cols.print = 5))
 
@@ -269,7 +273,7 @@ stratify <- function(replicate_data, schema) {
     
     return(list(strata_data = split_data,
                 stratification_vars = stratification_vars))
-
+    
 }
 
 ```
@@ -340,17 +344,17 @@ proyecto. Para esto, usted debe descargar las estimaciones publicadas [acá](htt
 ```{r mse-function, eval = FALSE}
 
 mse(
-  stratum_data,
-  stratum_name,
-  estimates_dir = NULL,
-  min_n = 1,
-  K = NULL,
-  buffer_size = 10000,
-  sampler_thinning = 1000,
-  seed = 19481210,
-  burnin = 10000,
-  n_samples = 10000,
-  posterior_thinning = 500
+    stratum_data,
+    stratum_name,
+    estimates_dir = NULL,
+    min_n = 1,
+    K = NULL,
+    buffer_size = 10000,
+    sampler_thinning = 1000,
+    seed = 19481210,
+    burnin = 10000,
+    n_samples = 10000,
+    posterior_thinning = 500
 )
 
 ```
@@ -400,7 +404,7 @@ estimacion <- estimacion %>%
              sep = "-", remove = FALSE, extra = "merge") %>% 
     rename(replicate = replica) %>% 
     select(validated, N, valid_sources, n_obs, stratum_name, replicate, periodo_pres, etnia2, sexo)
-    
+
 
 
 paged_table(estimacion, options = list(rows.print = 10, cols.print = 8))

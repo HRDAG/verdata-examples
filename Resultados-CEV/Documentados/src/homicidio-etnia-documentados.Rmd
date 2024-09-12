@@ -74,8 +74,10 @@ la función devuelve el mensaje _"Some replicate file contents do not match the 
 
 ```{r confirm-replicates, eval=FALSE}
 
-confirmar <- verdata::confirm_files(here::here("verdata-parquet/homicidio"),
-                                    "homicidio", c(1:10))
+confirmar <- verdata::confirm_files(replicates_dir = here::here("verdata-parquet/homicidio"),
+                                    violation = "homicidio",
+                                    replicate_nums = c(1:10),
+                                    version = "v1")
 
 ```
 
@@ -104,8 +106,10 @@ en la Comisión de la Verdad.
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/homicidio"),
-                                           "homicidio", c(90:100))
+replicas_datos <- verdata::read_replicates(replicates_dir = here::here("verdata-parquet/homicidio"),
+                                           violation = "homicidio",
+                                           replicate_nums = c(90:100),
+                                           version = "v1")
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 

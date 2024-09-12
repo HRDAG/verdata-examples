@@ -27,7 +27,7 @@ options(warn = -1)
 ```{r numbers, include = FALSE}
 
 myNum <- function(n) {
-  return(prettyNum(n, big.mark = " "))
+    return(prettyNum(n, big.mark = " "))
 }
 
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -58,11 +58,11 @@ y realizando otras operaciones hechas para obtener los resultados por dicha vari
 
 macro_regiones <- readr::read_delim(here::here("Recursos/macroregiones_cev.csv"), 
                                     delim = "|", show_col_types = FALSE) %>%
-  dplyr::mutate_all(as.character) %>% 
-  dplyr::rename(muni_code_hecho = cod_mpio) %>%
-  dplyr::mutate(muni_code_hecho = as.numeric(muni_code_hecho)) %>%
-  dplyr::filter(macroregion != "Sumapaz") %>% 
-  dplyr::distinct(muni_code_hecho, .keep_all = TRUE)
+    dplyr::mutate_all(as.character) %>% 
+    dplyr::rename(muni_code_hecho = cod_mpio) %>%
+    dplyr::mutate(muni_code_hecho = as.numeric(muni_code_hecho)) %>%
+    dplyr::filter(macroregion != "Sumapaz") %>% 
+    dplyr::distinct(muni_code_hecho, .keep_all = TRUE)
 
 paged_table(macro_regiones, options = list(rows.print = 10, cols.print = 5))
 
@@ -89,8 +89,10 @@ la función devuelve el mensaje _"Some replicate file contents do not match the 
 
 ```{r confirm-replicates, eval=FALSE}
 
-confirmar <- verdata::confirm_files(here::here("verdata-parquet/homicidio"),
-                                    "homicidio", c(1:10))
+confirmar <- verdata::confirm_files(replicates_dir = here::here("verdata-parquet/homicidio"),
+                                    violation = "homicidio",
+                                    replicate_nums = c(1:10),
+                                    version = "v1")
 
 ```
 
@@ -119,8 +121,10 @@ en la Comisión de la Verdad.
 
 ```{r open-replicates, echo = TRUE}
 
-replicas_datos <- verdata::read_replicates(here::here("verdata-parquet/homicidio"),
-                                           "homicidio", c(1:10))
+replicas_datos <- verdata::read_replicates(replicates_dir = here::here("verdata-parquet/homicidio"),
+                                           violation = "homicidio",
+                                           replicate_nums = c(1:10),
+                                           version = "v1")
 
 paged_table(replicas_datos, options = list(rows.print = 10, cols.print = 5))
 
@@ -147,9 +151,9 @@ adicionales como quinquenio, más categorías de edades, etc.
 replicas_filtradas <- verdata::filter_standard_cev(replicas_datos,
                                                    "homicidio", 
                                                    perp_change = TRUE) %>% 
-  dplyr::mutate(muni_code_hecho = as.numeric(muni_code_hecho)) %>%
-  dplyr::left_join(macro_regiones, by = c("muni_code_hecho")) %>%
-  dplyr::filter(!is.na(macroregion))
+    dplyr::mutate(muni_code_hecho = as.numeric(muni_code_hecho)) %>%
+    dplyr::left_join(macro_regiones, by = c("muni_code_hecho")) %>%
+    dplyr::filter(!is.na(macroregion))
 
 paged_table(replicas_filtradas, options = list(rows.print = 10, cols.print = 5))
 
@@ -198,18 +202,18 @@ paged_table(tabla_documentada, options = list(rows.print = 4, cols.print = 4))
 
 graph <- ggplot(tabla_documentada,
                 aes(x = reorder(macroregion , -observed), y = 0)) +
-  geom_col(aes(y = observed, fill = "Observado"), color = "#2F2F2F") +
-  scale_y_continuous(labels = function(n){format(n, scientific = FALSE)}) +
-  theme_minimal() +
-  theme(legend.title = element_text(size = 6, face = "bold"),
-        legend.text = element_text(size = 9, face = "bold"),
-        legend.position = c(0.7, 0.7)) +
-  theme(axis.text.x = element_text(angle = 50, hjust = 1, face = "bold")) +
-  theme(legend.position = "top") +
-  labs(x = "Macroregiones de la CEV",
-       y = "Número de víctimas documentadas",
-       fill = "") +
-  scale_fill_manual(values = c("Observado" = "#2F2F2F"))
+    geom_col(aes(y = observed, fill = "Observado"), color = "#2F2F2F") +
+    scale_y_continuous(labels = function(n){format(n, scientific = FALSE)}) +
+    theme_minimal() +
+    theme(legend.title = element_text(size = 6, face = "bold"),
+          legend.text = element_text(size = 9, face = "bold"),
+          legend.position = c(0.7, 0.7)) +
+    theme(axis.text.x = element_text(angle = 50, hjust = 1, face = "bold")) +
+    theme(legend.position = "top") +
+    labs(x = "Macroregiones de la CEV",
+         y = "Número de víctimas documentadas",
+         fill = "") +
+    scale_fill_manual(values = c("Observado" = "#2F2F2F"))
 
 
 graph
